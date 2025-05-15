@@ -300,7 +300,26 @@ class User extends BaseModel {
             unset($data['lastname']);
         }
         
+        // Verifica se l'utente esiste già
+        $existingUser = $this->findOneByField('email', $data['email']);
+        if ($existingUser) {
+            // Utente già registrato, possiamo gestirlo in modi diversi
+            // Per ora restituiamo false per indicare che la registrazione non è riuscita
+            return false;
+        }
+        
         // Create user
-        return $this->create($data);
+        try {
+            return $this->create($data);
+        } catch (PDOException $e) {
+            // Gestione dell'errore di duplicazione
+            if (strpos($e->getMessage(), 'users_email_key') !== false) {
+                // Email duplicata
+                error_log("Tentativo di registrazione con email duplicata: " . $data['email']);
+                return false;
+            }
+            // Altri errori, rilancia l'eccezione
+            throw $e;
+        }
     }
 }

@@ -234,6 +234,11 @@ class InviteController extends BaseController {
             $errors['email'] = 'L\'indirizzo email non corrisponde a quello dell\'invito';
         }
         
+        // Verifica se l'email esiste già nel sistema
+        if ($this->userModel->findOneByField('email', $data['email'])) {
+            $errors['email'] = 'L\'indirizzo email è già registrato nel sistema. Si prega di effettuare il login.';
+        }
+        
         // Verifica la password
         if (strlen($data['password']) < 6) {
             $errors['password'] = 'La password deve contenere almeno 6 caratteri';
