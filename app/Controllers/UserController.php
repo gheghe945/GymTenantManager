@@ -397,4 +397,201 @@ class UserController extends BaseController {
         
         redirect('users');
     }
+    
+    /**
+     * Disabilita un utente
+     *
+     * @param int $id ID dell'utente
+     * @return void
+     */
+    public function disable($id) {
+        // Check role-based permissions
+        if (!hasRole('SUPER_ADMIN') && !hasRole('GYM_ADMIN')) {
+            redirect('dashboard');
+        }
+        
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            redirect('users');
+        }
+        
+        // Get user by ID
+        $user = $this->userModel->getUserById($id);
+        
+        // Check if user exists
+        if (!$user) {
+            redirect('users');
+        }
+        
+        // Check if GYM_ADMIN is trying to disable user from another tenant
+        if (hasRole('GYM_ADMIN') && $user['tenant_id'] != getCurrentTenantId()) {
+            flash('user_message', 'Azione non autorizzata', 'alert alert-danger');
+            redirect('users');
+        }
+        
+        // Prevent disabling yourself
+        if ($user['id'] == $_SESSION['user_id']) {
+            flash('user_message', 'Non puoi disabilitare il tuo account', 'alert alert-danger');
+            redirect('users');
+        }
+        
+        // Disable user
+        if ($this->userModel->disableUser($id)) {
+            flash('user_message', 'Utente disabilitato con successo');
+        } else {
+            flash('user_message', 'Si è verificato un errore', 'alert alert-danger');
+        }
+        
+        redirect('users');
+    }
+    
+    /**
+     * Abilita un utente
+     *
+     * @param int $id ID dell'utente
+     * @return void
+     */
+    public function enable($id) {
+        // Check role-based permissions
+        if (!hasRole('SUPER_ADMIN') && !hasRole('GYM_ADMIN')) {
+            redirect('dashboard');
+        }
+        
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            redirect('users');
+        }
+        
+        // Get user by ID
+        $user = $this->userModel->getUserById($id);
+        
+        // Check if user exists
+        if (!$user) {
+            redirect('users');
+        }
+        
+        // Check if GYM_ADMIN is trying to enable user from another tenant
+        if (hasRole('GYM_ADMIN') && $user['tenant_id'] != getCurrentTenantId()) {
+            flash('user_message', 'Azione non autorizzata', 'alert alert-danger');
+            redirect('users');
+        }
+        
+        // Enable user
+        if ($this->userModel->enableUser($id)) {
+            flash('user_message', 'Utente abilitato con successo');
+        } else {
+            flash('user_message', 'Si è verificato un errore', 'alert alert-danger');
+        }
+        
+        redirect('users');
+    }
+    
+    /**
+     * Mostra il form per il reset della password
+     *
+     * @param int $id ID dell'utente
+     * @return void
+     */
+    public function resetPassword($id) {
+        // Check role-based permissions
+        if (!hasRole('SUPER_ADMIN') && !hasRole('GYM_ADMIN')) {
+            redirect('dashboard');
+        }
+        
+        // Get user by ID
+        $user = $this->userModel->getUserById($id);
+        
+        // Check if user exists
+        if (!$user) {
+            redirect('users');
+        }
+        
+        // Check if GYM_ADMIN is trying to reset password for user from another tenant
+        if (hasRole('GYM_ADMIN') && $user['tenant_id'] != getCurrentTenantId()) {
+            flash('user_message', 'Azione non autorizzata', 'alert alert-danger');
+            redirect('users');
+        }
+        
+        $data = [
+            'id' => $id,
+            'user' => $user,
+            'new_password' => '',
+            'confirm_password' => '',
+            'new_password_err' => '',
+            'confirm_password_err' => ''
+        ];
+        
+        $this->render('users/reset_password', $data);
+    }
+    
+    /**
+     * Processa il reset della password
+     *
+     * @param int $id ID dell'utente
+     * @return void
+     */
+    public function updatePassword($id) {
+        // Check role-based permissions
+        if (!hasRole('SUPER_ADMIN') && !hasRole('GYM_ADMIN')) {
+            redirect('dashboard');
+        }
+        
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            redirect('users');
+        }
+        
+        // Get user by ID
+        $user = $this->userModel->getUserById($id);
+        
+        // Check if user exists
+        if (!$user) {
+            redirect('users');
+        }
+        
+        // Check if GYM_ADMIN is trying to reset password for user from another tenant
+        if (hasRole('GYM_ADMIN') && $user['tenant_id'] != getCurrentTenantId()) {
+            flash('user_message', 'Azione non autorizzata', 'alert alert-danger');
+            redirect('users');
+        }
+        
+        // Process form
+        $data = [
+            'id' => $id,
+            'user' => $user,
+            'new_password' => trim($_POST['new_password']),
+            'confirm_password' => trim($_POST['confirm_password']),
+            'new_password_err' => '',
+            'confirm_password_err' => ''
+        ];
+        
+        // Validate password
+        if (empty($data['new_password'])) {
+            $data['new_password_err'] = 'Inserisci la nuova password';
+        } elseif (strlen($data['new_password']) < 6) {
+            $data['new_password_err'] = 'La password deve essere di almeno 6 caratteri';
+        }
+        
+        // Validate confirm password
+        if (empty($data['confirm_password'])) {
+            $data['confirm_password_err'] = 'Conferma la password';
+        } elseif ($data['new_password'] !== $data['confirm_password']) {
+            $data['confirm_password_err'] = 'Le password non corrispondono';
+        }
+        
+        // Make sure there are no errors
+        if (empty($data['new_password_err']) && empty($data['confirm_password_err'])) {
+            // Hash password
+            $hashedPassword = password_hash($data['new_password'], PASSWORD_DEFAULT);
+            
+            // Update user password
+            if ($this->userModel->resetPassword($id, $hashedPassword)) {
+                flash('user_message', 'Password reimpostata con successo');
+                redirect('users');
+            } else {
+                flash('user_message', 'Si è verificato un errore', 'alert alert-danger');
+                $this->render('users/reset_password', $data);
+            }
+        } else {
+            // Load view with errors
+            $this->render('users/reset_password', $data);
+        }
+    }
 }

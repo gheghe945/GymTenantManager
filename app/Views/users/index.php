@@ -21,6 +21,7 @@
                         <?php if (hasRole('SUPER_ADMIN')): ?>
                         <th>Gym</th>
                         <?php endif; ?>
+                        <th>Status</th>
                         <th>Created</th>
                         <th>Actions</th>
                     </tr>
@@ -28,7 +29,7 @@
                 <tbody>
                     <?php if (empty($users)): ?>
                         <tr>
-                            <td colspan="<?= hasRole('SUPER_ADMIN') ? 6 : 5 ?>" class="text-center">No users found</td>
+                            <td colspan="<?= hasRole('SUPER_ADMIN') ? 7 : 6 ?>" class="text-center">No users found</td>
                         </tr>
                     <?php else: ?>
                         <?php foreach ($users as $user): ?>
@@ -53,18 +54,50 @@
                                     <?php endif; ?>
                                 </td>
                                 <?php endif; ?>
+                                <td>
+                                    <?php if (isset($user['is_active'])): ?>
+                                        <?php if ($user['is_active']): ?>
+                                            <span class="badge bg-success">Attivo</span>
+                                        <?php else: ?>
+                                            <span class="badge bg-danger">Disabilitato</span>
+                                        <?php endif; ?>
+                                    <?php else: ?>
+                                        <span class="badge bg-success">Attivo</span>
+                                    <?php endif; ?>
+                                </td>
                                 <td><?= date('M d, Y', strtotime($user['created_at'])) ?></td>
                                 <td>
-                                    <div class="flex gap-1">
+                                    <div class="d-flex gap-1">
                                         <?php if ((hasRole('SUPER_ADMIN')) || 
                                                  (hasRole('GYM_ADMIN') && $user['role'] !== 'SUPER_ADMIN')): ?>
-                                            <a href="<?= URLROOT ?>/users/edit/<?= $user['id'] ?>" class="btn btn-sm btn-primary">
+                                            <a href="<?= URLROOT ?>/users/edit/<?= $user['id'] ?>" class="btn btn-sm btn-primary" title="Modifica">
                                                 <i class="fas fa-edit"></i>
                                             </a>
                                             
                                             <?php if ($user['id'] != $_SESSION['user_id']): ?>
+                                                <!-- Reset Password -->
+                                                <a href="<?= URLROOT ?>/users/resetPassword/<?= $user['id'] ?>" class="btn btn-sm btn-info" title="Reset Password">
+                                                    <i class="fas fa-key"></i>
+                                                </a>
+                                                
+                                                <!-- Enable/Disable User -->
+                                                <?php if (isset($user['is_active']) && $user['is_active']): ?>
+                                                    <form action="<?= URLROOT ?>/users/disable/<?= $user['id'] ?>" method="post" class="d-inline">
+                                                        <button type="submit" class="btn btn-sm btn-warning" title="Disabilita Utente">
+                                                            <i class="fas fa-ban"></i>
+                                                        </button>
+                                                    </form>
+                                                <?php else: ?>
+                                                    <form action="<?= URLROOT ?>/users/enable/<?= $user['id'] ?>" method="post" class="d-inline">
+                                                        <button type="submit" class="btn btn-sm btn-success" title="Abilita Utente">
+                                                            <i class="fas fa-check"></i>
+                                                        </button>
+                                                    </form>
+                                                <?php endif; ?>
+                                                
+                                                <!-- Delete User -->
                                                 <form action="<?= URLROOT ?>/users/delete/<?= $user['id'] ?>" method="post" class="d-inline">
-                                                    <button type="submit" class="btn btn-sm btn-danger" data-delete-confirm="Are you sure you want to delete this user?">
+                                                    <button type="submit" class="btn btn-sm btn-danger" data-delete-confirm="Sei sicuro di voler eliminare questo utente?" title="Elimina">
                                                         <i class="fas fa-trash"></i>
                                                     </button>
                                                 </form>
