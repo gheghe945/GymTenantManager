@@ -160,11 +160,11 @@ class Attendance extends BaseModel {
      * @return array
      */
     public function getAttendanceByDayOfWeek($tenantId, $startDate, $endDate) {
-        $sql = "SELECT DAYNAME(date) as day_name, COUNT(*) as count 
+        $sql = "SELECT TO_CHAR(date, 'Day') as day_name, COUNT(*) as count 
                 FROM {$this->table} 
                 WHERE tenant_id = :tenant_id AND date BETWEEN :start_date AND :end_date 
                 GROUP BY day_name 
-                ORDER BY DAYOFWEEK(date)";
+                ORDER BY EXTRACT(DOW FROM date)";
         
         $stmt = $this->db->prepare($sql);
         $stmt->bindParam(':tenant_id', $tenantId, PDO::PARAM_INT);

@@ -145,7 +145,7 @@ class Payment extends BaseModel {
      */
     public function getMonthlyRevenue($tenantId, $startDate, $endDate) {
         $sql = "SELECT 
-                DATE_FORMAT(payment_date, '%Y-%m') as month,
+                TO_CHAR(payment_date, 'YYYY-MM') as month,
                 SUM(amount) as total 
                 FROM {$this->table} 
                 WHERE tenant_id = :tenant_id 
@@ -199,7 +199,7 @@ class Payment extends BaseModel {
      */
     public function getRevenueByMembershipType($tenantId, $startDate, $endDate) {
         $sql = "SELECT 
-                IFNULL(m.type, 'Other') as membership_type,
+                COALESCE(m.type, 'Other') as membership_type,
                 SUM(p.amount) as total 
                 FROM {$this->table} p 
                 LEFT JOIN memberships m ON p.membership_id = m.id 
