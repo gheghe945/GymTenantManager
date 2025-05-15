@@ -17,7 +17,8 @@ class User extends BaseModel {
      * @return array|false
      */
     public function findUserByEmail($email) {
-        $sql = "SELECT * FROM {$this->table} WHERE email = :email";
+        $sql = "SELECT id, tenant_id, name, email, password, role::text as role, created_at, updated_at 
+                FROM {$this->table} WHERE email = :email";
         
         $stmt = $this->db->prepare($sql);
         $stmt->bindParam(':email', $email, PDO::PARAM_STR);

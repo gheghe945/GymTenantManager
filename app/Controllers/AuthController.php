@@ -30,13 +30,10 @@ class AuthController extends BaseController {
         
         // Check if form is submitted
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            // Sanitize POST data
-            $_POST = filter_input_array(INPUT_POST, FILTER_SANITIZE_STRING);
-            
-            // Initialize data
+            // Initialize data with sanitized input
             $data = [
-                'email' => trim($_POST['email']),
-                'password' => trim($_POST['password']),
+                'email' => filter_var(trim($_POST['email'] ?? ''), FILTER_SANITIZE_EMAIL),
+                'password' => trim($_POST['password'] ?? ''),
                 'email_err' => '',
                 'password_err' => '',
             ];
@@ -55,6 +52,17 @@ class AuthController extends BaseController {
             if (empty($data['email_err']) && empty($data['password_err'])) {
                 // Attempt to authenticate user
                 $user = $this->userModel->findUserByEmail($data['email']);
+                
+                // Debug information
+                error_log("Login attempt for email: " . $data['email']);
+                if ($user) {
+                    error_log("User found with ID: " . $user['id']);
+                    error_log("Password verification result: " . (password_verify($data['password'], $user['password']) ? 'true' : 'false'));
+                    // For debugging - show actual password used in database
+                    error_log("Stored password hash: " . $user['password']);
+                } else {
+                    error_log("No user found with this email");
+                }
                 
                 if ($user && password_verify($data['password'], $user['password'])) {
                     // Create session
