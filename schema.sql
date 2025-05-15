@@ -144,3 +144,51 @@ VALUES (1, 'Gym Admin', 'gymadmin@example.com', '$2y$10$b5plA/KpnHsZ0Ew7u3oxLu9Q
 -- Create sample member (password: member123)
 INSERT INTO users (tenant_id, name, email, password, role) 
 VALUES (1, 'John Member', 'member@example.com', '$2y$10$FJ5.ew8/WrCyvzSNDT0MkOzEYMBQdC.o0c9jPuWnU4n1KUK9icm4G', 'MEMBER');
+
+-- Tabella per gli inviti
+CREATE TABLE IF NOT EXISTS invites (
+    id SERIAL PRIMARY KEY,
+    token VARCHAR(100) NOT NULL UNIQUE,
+    tenant_id INT NOT NULL,
+    email VARCHAR(100) NOT NULL,
+    status VARCHAR(20) NOT NULL DEFAULT 'pending', -- pending, used, expired
+    expires_at TIMESTAMP NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE
+);
+
+-- Tabella per le impostazioni SMTP
+CREATE TABLE IF NOT EXISTS smtp_settings (
+    id SERIAL PRIMARY KEY,
+    tenant_id INT NOT NULL UNIQUE,
+    host VARCHAR(100) NOT NULL,
+    port INT NOT NULL DEFAULT 587,
+    username VARCHAR(100) NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    sender_name VARCHAR(100) NOT NULL,
+    sender_email VARCHAR(100) NOT NULL,
+    encryption VARCHAR(10) DEFAULT 'tls', -- tls, ssl, none
+    active BOOLEAN DEFAULT true,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE
+);
+
+-- Tabella per i profili utente
+CREATE TABLE IF NOT EXISTS user_profiles (
+    id SERIAL PRIMARY KEY,
+    user_id INT NOT NULL UNIQUE,
+    lastname VARCHAR(100) NOT NULL,
+    phone VARCHAR(20) NOT NULL,
+    birthdate DATE NOT NULL,
+    tax_code VARCHAR(20) NOT NULL,
+    address VARCHAR(255) NOT NULL,
+    city VARCHAR(100) NOT NULL,
+    zip VARCHAR(10) NOT NULL,
+    province VARCHAR(20) NOT NULL,
+    weight NUMERIC(5,2) NOT NULL,
+    height NUMERIC(5,2) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
