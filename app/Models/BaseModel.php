@@ -296,4 +296,50 @@ class BaseModel
         $stmt->execute();
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
+    
+    /**
+     * Count records with optional conditions
+     * @param string $whereClause Optional where clause (without the WHERE keyword)
+     * @param array $params Parameters to bind
+     * @return int
+     */
+    public function count($whereClause = '', $params = [])
+    {
+        $tenantId = getCurrentTenantId();
+        $sql = "SELECT COUNT(*) as total FROM {$this->table}";
+        
+        if ($whereClause) {
+            $sql .= " WHERE $whereClause";
+        } else if ($tenantId !== null && $this->tenantColumn) {
+            $sql .= " WHERE {$this->tenantColumn} = :tenant_id";
+        }
+        
+        $stmt = $this->db->prepare($sql);
+        
+        // Bind parameters
+        foreach ($params as $key => $value) {
+            // Salta i valori non scalari (array, oggetti, ecc.)
+            if (!is_scalar($value) && !is_null($value)) {
+                error_log("Skipping non-scalar value for key: " . $key);
+                continue;
+            }
+            
+            // Se la chiave non inizia con :, lo aggiungiamo
+            if (strpos($key, ':') !== 0) {
+                $key = ':' . $key;
+            }
+            
+            $stmt->bindValue($key, $value);
+        }
+        
+        // Bind tenant ID if needed and not already bound
+        if ($tenantId !== null && $this->tenantColumn && !isset($params['tenant_id']) && !isset($params[':tenant_id'])) {
+            $stmt->bindParam(':tenant_id', $tenantId, PDO::PARAM_INT);
+        }
+        
+        $stmt->execute();
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        return (int)$result['total'];
+    }
 }
