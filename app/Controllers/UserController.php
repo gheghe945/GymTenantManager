@@ -104,7 +104,7 @@ class UserController extends BaseController {
         }
         
         // Sanitize POST data
-        $_POST = filter_input_array(INPUT_POST, FILTER_SANITIZE_STRING);
+        $_POST = filter_input_array(INPUT_POST);
         
         // Get tenants list if SUPER_ADMIN
         $tenants = [];
@@ -267,7 +267,7 @@ class UserController extends BaseController {
         }
         
         // Sanitize POST data
-        $_POST = filter_input_array(INPUT_POST, FILTER_SANITIZE_STRING);
+        $_POST = filter_input_array(INPUT_POST);
         
         // Get tenants list if SUPER_ADMIN
         $tenants = [];
@@ -339,8 +339,19 @@ class UserController extends BaseController {
                 unset($data['password']);
             }
             
+            // Rimuovi i campi di errore e altri campi non del database prima dell'aggiornamento
+            $updateData = $data;
+            unset($updateData['name_err']);
+            unset($updateData['email_err']);
+            unset($updateData['password_err']);
+            unset($updateData['confirm_password_err']);
+            unset($updateData['role_err']);
+            unset($updateData['tenant_id_err']);
+            unset($updateData['tenants']);
+            unset($updateData['isSuperAdmin']);
+            
             // Update user
-            if ($this->userModel->update($data)) {
+            if ($this->userModel->update($updateData)) {
                 flash('user_message', 'User updated successfully');
                 redirect('users');
             } else {
