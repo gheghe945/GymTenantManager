@@ -141,4 +141,30 @@ class User extends BaseModel {
         
         return $this->count($whereClause, $params);
     }
+    
+    /**
+     * Create a new user
+     *
+     * @param array $data User data
+     * @return int|false The ID of the newly created user, or false on failure
+     */
+    public function create($data) {
+        $sql = "INSERT INTO {$this->table} (tenant_id, name, email, password, role, created_at, updated_at) 
+                VALUES (:tenant_id, :name, :email, :password, :role::user_role, NOW(), NOW()) RETURNING id";
+        
+        $stmt = $this->db->prepare($sql);
+        
+        $stmt->bindParam(':tenant_id', $data['tenant_id'], PDO::PARAM_INT);
+        $stmt->bindParam(':name', $data['name'], PDO::PARAM_STR);
+        $stmt->bindParam(':email', $data['email'], PDO::PARAM_STR);
+        $stmt->bindParam(':password', $data['password'], PDO::PARAM_STR);
+        $stmt->bindParam(':role', $data['role'], PDO::PARAM_STR);
+        
+        if ($stmt->execute()) {
+            // Return the new user ID
+            return $stmt->fetchColumn();
+        }
+        
+        return false;
+    }
 }

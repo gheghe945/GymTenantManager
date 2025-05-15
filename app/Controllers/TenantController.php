@@ -119,33 +119,89 @@ class TenantController extends BaseController {
         
         // Validate name
         if (empty($data['name'])) {
-            $data['name_err'] = 'Please enter gym name';
+            $data['name_err'] = __('Please enter gym name');
         }
         
         // Validate subdomain
         if (empty($data['subdomain'])) {
-            $data['subdomain_err'] = 'Please enter subdomain';
+            $data['subdomain_err'] = __('Please enter subdomain');
         } elseif (!preg_match('/^[a-z0-9-]+$/', $data['subdomain'])) {
-            $data['subdomain_err'] = 'Subdomain can only contain lowercase letters, numbers, and hyphens';
+            $data['subdomain_err'] = __('Subdomain can only contain lowercase letters, numbers, and hyphens');
         } elseif ($this->tenantModel->findTenantBySubdomain($data['subdomain'])) {
-            $data['subdomain_err'] = 'Subdomain is already taken';
+            $data['subdomain_err'] = __('Subdomain is already taken');
         }
         
         // Validate email
         if (empty($data['email'])) {
-            $data['email_err'] = 'Please enter email';
+            $data['email_err'] = __('Please enter email');
         } elseif (!filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
-            $data['email_err'] = 'Please enter a valid email';
+            $data['email_err'] = __('Please enter a valid email');
+        }
+        
+        // Validate admin fields if they're filled
+        if (!empty($data['admin_name']) || !empty($data['admin_email']) || !empty($data['admin_password'])) {
+            // If any admin field is filled, all are required
+            if (empty($data['admin_name'])) {
+                $data['admin_name_err'] = __('Please enter admin name');
+            }
+            
+            if (empty($data['admin_email'])) {
+                $data['admin_email_err'] = __('Please enter admin email');
+            } elseif (!filter_var($data['admin_email'], FILTER_VALIDATE_EMAIL)) {
+                $data['admin_email_err'] = __('Please enter a valid email');
+            } elseif ($this->userModel->findUserByEmail($data['admin_email'])) {
+                $data['admin_email_err'] = __('Email is already registered');
+            }
+            
+            if (empty($data['admin_password'])) {
+                $data['admin_password_err'] = __('Please enter password');
+            } elseif (strlen($data['admin_password']) < 6) {
+                $data['admin_password_err'] = __('Password must be at least 6 characters');
+            } elseif ($data['admin_password'] !== $data['admin_password_confirm']) {
+                $data['admin_password_err'] = __('Passwords do not match');
+            }
         }
         
         // Make sure no errors
-        if (empty($data['name_err']) && empty($data['subdomain_err']) && empty($data['email_err'])) {
-            // Create tenant
-            if ($this->tenantModel->create($data)) {
-                flash('tenant_message', 'Gym added successfully');
+        if (empty($data['name_err']) && empty($data['subdomain_err']) && empty($data['email_err']) &&
+            empty($data['admin_name_err']) && empty($data['admin_email_err']) && empty($data['admin_password_err'])) {
+            
+            // Use transaction to ensure data consistency
+            $db = getDbConnection();
+            $db->beginTransaction();
+            
+            try {
+                // Create tenant
+                $tenantId = $this->tenantModel->create($data);
+                
+                if (!$tenantId) {
+                    throw new Exception(__('Error creating gym'));
+                }
+                
+                // Create admin user if admin details are provided
+                if (!empty($data['admin_name']) && !empty($data['admin_email']) && !empty($data['admin_password'])) {
+                    $adminData = [
+                        'tenant_id' => $tenantId,
+                        'name' => $data['admin_name'],
+                        'email' => $data['admin_email'],
+                        'password' => password_hash($data['admin_password'], PASSWORD_DEFAULT),
+                        'role' => 'GYM_ADMIN'
+                    ];
+                    
+                    if (!$this->userModel->create($adminData)) {
+                        throw new Exception(__('Error creating admin user'));
+                    }
+                }
+                
+                // Commit transaction
+                $db->commit();
+                
+                flash('tenant_message', __('Gym added successfully with admin user'));
                 redirect('tenants');
-            } else {
-                die('Something went wrong');
+            } catch (Exception $e) {
+                // Rollback transaction on error
+                $db->rollBack();
+                die($e->getMessage());
             }
         } else {
             // Load view with errors
