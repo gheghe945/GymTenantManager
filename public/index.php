@@ -38,6 +38,10 @@ $router->register('users/store', 'UserController@store');
 $router->register('users/edit/([0-9]+)', 'UserController@edit');
 $router->register('users/update/([0-9]+)', 'UserController@update');
 $router->register('users/delete/([0-9]+)', 'UserController@delete');
+$router->register('users/disable/([0-9]+)', 'UserController@disable');
+$router->register('users/enable/([0-9]+)', 'UserController@enable');
+$router->register('users/resetPassword/([0-9]+)', 'UserController@resetPassword');
+$router->register('users/updatePassword/([0-9]+)', 'UserController@updatePassword');
 
 // Course routes
 $router->register('courses', 'CourseController@index');
