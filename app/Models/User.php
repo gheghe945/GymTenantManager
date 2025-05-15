@@ -167,4 +167,54 @@ class User extends BaseModel {
         
         return false;
     }
+    
+    /**
+     * Get users without a tenant assigned
+     * 
+     * @return array
+     */
+    public function getUsersWithoutTenant() {
+        $sql = "SELECT * FROM {$this->table} WHERE tenant_id IS NULL ORDER BY name";
+        
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute();
+        
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+    
+    /**
+     * Assign user to tenant with role
+     * 
+     * @param int $userId User ID
+     * @param int $tenantId Tenant ID
+     * @param string $role Role to assign
+     * @return bool
+     */
+    public function assignUserToTenant($userId, $tenantId, $role = 'GYM_ADMIN') {
+        $sql = "UPDATE {$this->table} SET tenant_id = :tenant_id, role = :role::user_role 
+                WHERE id = :user_id";
+        
+        $stmt = $this->db->prepare($sql);
+        $stmt->bindParam(':tenant_id', $tenantId, PDO::PARAM_INT);
+        $stmt->bindParam(':role', $role, PDO::PARAM_STR);
+        $stmt->bindParam(':user_id', $userId, PDO::PARAM_INT);
+        
+        return $stmt->execute();
+    }
+    
+    /**
+     * Remove user from tenant
+     * 
+     * @param int $userId User ID
+     * @return bool
+     */
+    public function removeUserFromTenant($userId) {
+        $sql = "UPDATE {$this->table} SET tenant_id = NULL, role = 'MEMBER'::user_role 
+                WHERE id = :user_id";
+        
+        $stmt = $this->db->prepare($sql);
+        $stmt->bindParam(':user_id', $userId, PDO::PARAM_INT);
+        
+        return $stmt->execute();
+    }
 }

@@ -4,6 +4,12 @@
  */
 class TenantController extends BaseController {
     /**
+     * User model instance for managing administrators
+     * 
+     * @var User
+     */
+    private $userModel;
+    /**
      * Tenant model instance
      *
      * @var Tenant
@@ -348,11 +354,212 @@ class TenantController extends BaseController {
         
         // Delete tenant
         if ($this->tenantModel->delete($id)) {
-            flash('tenant_message', 'Gym removed successfully');
+            flash('tenant_message', __('Gym removed successfully'));
         } else {
-            flash('tenant_message', 'Something went wrong', 'alert alert-danger');
+            flash('tenant_message', __('Something went wrong'), 'alert alert-danger');
         }
         
         redirect('tenants');
+    }
+    
+    /**
+     * Display administrators for a tenant
+     *
+     * @param int $tenantId Tenant ID
+     * @return void
+     */
+    public function administrators($tenantId) {
+        // Only SUPER_ADMIN can access this
+        if (!hasRole('SUPER_ADMIN')) {
+            redirect('dashboard');
+        }
+        
+        // Get tenant
+        $tenant = $this->tenantModel->getTenantById($tenantId);
+        
+        // Check if tenant exists
+        if (!$tenant) {
+            redirect('tenants');
+        }
+        
+        // Get administrators for this tenant
+        $administrators = $this->userModel->getUsersByRoleAndTenant('GYM_ADMIN', $tenantId);
+        
+        // Get all users without a tenant for potential admin assignment
+        $availableUsers = $this->userModel->getUsersWithoutTenant();
+        
+        $data = [
+            'tenant' => $tenant,
+            'administrators' => $administrators,
+            'availableUsers' => $availableUsers,
+            'admin_name' => '',
+            'admin_email' => '',
+            'admin_password' => '',
+            'admin_name_err' => '',
+            'admin_email_err' => '',
+            'admin_password_err' => ''
+        ];
+        
+        $this->render('tenants/administrators', $data);
+    }
+    
+    /**
+     * Add administrator to a tenant
+     *
+     * @param int $tenantId Tenant ID
+     * @return void
+     */
+    public function addAdministrator($tenantId) {
+        // Only SUPER_ADMIN can access this
+        if (!hasRole('SUPER_ADMIN')) {
+            redirect('dashboard');
+        }
+        
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            redirect('tenants/administrators/' . $tenantId);
+        }
+        
+        // Get tenant
+        $tenant = $this->tenantModel->getTenantById($tenantId);
+        
+        // Check if tenant exists
+        if (!$tenant) {
+            redirect('tenants');
+        }
+        
+        // Sanitize POST data
+        $_POST = filter_input_array(INPUT_POST, FILTER_SANITIZE_STRING);
+        
+        // Initialize data
+        $data = [
+            'tenant' => $tenant,
+            'tenant_id' => $tenantId,
+            'admin_name' => trim($_POST['admin_name']),
+            'admin_email' => trim($_POST['admin_email']),
+            'admin_password' => $_POST['admin_password'],
+            'admin_password_confirm' => $_POST['admin_password_confirm'],
+            'admin_name_err' => '',
+            'admin_email_err' => '',
+            'admin_password_err' => ''
+        ];
+        
+        // Validate admin name
+        if (empty($data['admin_name'])) {
+            $data['admin_name_err'] = __('Please enter admin name');
+        }
+        
+        // Validate admin email
+        if (empty($data['admin_email'])) {
+            $data['admin_email_err'] = __('Please enter admin email');
+        } elseif (!filter_var($data['admin_email'], FILTER_VALIDATE_EMAIL)) {
+            $data['admin_email_err'] = __('Please enter a valid email');
+        } elseif ($this->userModel->findUserByEmail($data['admin_email'])) {
+            $data['admin_email_err'] = __('Email is already registered');
+        }
+        
+        // Validate admin password
+        if (empty($data['admin_password'])) {
+            $data['admin_password_err'] = __('Please enter password');
+        } elseif (strlen($data['admin_password']) < 6) {
+            $data['admin_password_err'] = __('Password must be at least 6 characters');
+        } elseif ($data['admin_password'] !== $data['admin_password_confirm']) {
+            $data['admin_password_err'] = __('Passwords do not match');
+        }
+        
+        // Make sure no errors
+        if (empty($data['admin_name_err']) && empty($data['admin_email_err']) && empty($data['admin_password_err'])) {
+            // Create admin user
+            $adminData = [
+                'tenant_id' => $tenantId,
+                'name' => $data['admin_name'],
+                'email' => $data['admin_email'],
+                'password' => password_hash($data['admin_password'], PASSWORD_DEFAULT),
+                'role' => 'GYM_ADMIN'
+            ];
+            
+            if ($this->userModel->create($adminData)) {
+                flash('tenant_message', __('Administrator added successfully'));
+                redirect('tenants/administrators/' . $tenantId);
+            } else {
+                die(__('Something went wrong'));
+            }
+        } else {
+            // Get administrators for this tenant
+            $administrators = $this->userModel->getUsersByRoleAndTenant('GYM_ADMIN', $tenantId);
+            
+            // Get all users without a tenant for potential admin assignment
+            $availableUsers = $this->userModel->getUsersWithoutTenant();
+            
+            // Add to data array
+            $data['administrators'] = $administrators;
+            $data['availableUsers'] = $availableUsers;
+            
+            // Load view with errors
+            $this->render('tenants/administrators', $data);
+        }
+    }
+    
+    /**
+     * Remove administrator from tenant
+     *
+     * @param int $tenantId Tenant ID
+     * @param int $userId User ID
+     * @return void
+     */
+    public function removeAdministrator($tenantId, $userId) {
+        // Only SUPER_ADMIN can access this
+        if (!hasRole('SUPER_ADMIN')) {
+            redirect('dashboard');
+        }
+        
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            redirect('tenants/administrators/' . $tenantId);
+        }
+        
+        // Remove admin from tenant
+        if ($this->userModel->removeUserFromTenant($userId)) {
+            flash('tenant_message', __('Administrator removed successfully'));
+        } else {
+            flash('tenant_message', __('Error removing administrator'), 'alert-danger');
+        }
+        
+        redirect('tenants/administrators/' . $tenantId);
+    }
+    
+    /**
+     * Assign existing user as administrator to tenant
+     *
+     * @param int $tenantId Tenant ID
+     * @return void
+     */
+    public function assignAdministrator($tenantId) {
+        // Only SUPER_ADMIN can access this
+        if (!hasRole('SUPER_ADMIN')) {
+            redirect('dashboard');
+        }
+        
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            redirect('tenants/administrators/' . $tenantId);
+        }
+        
+        // Sanitize POST data
+        $_POST = filter_input_array(INPUT_POST, FILTER_SANITIZE_STRING);
+        
+        // Get user ID from POST
+        $userId = isset($_POST['user_id']) ? (int)$_POST['user_id'] : 0;
+        
+        if ($userId <= 0) {
+            flash('tenant_message', __('Invalid user selected'), 'alert-danger');
+            redirect('tenants/administrators/' . $tenantId);
+        }
+        
+        // Assign admin to tenant
+        if ($this->userModel->assignUserToTenant($userId, $tenantId, 'GYM_ADMIN')) {
+            flash('tenant_message', __('Administrator assigned successfully'));
+        } else {
+            flash('tenant_message', __('Error assigning administrator'), 'alert-danger');
+        }
+        
+        redirect('tenants/administrators/' . $tenantId);
     }
 }
