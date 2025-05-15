@@ -38,6 +38,7 @@ require_once APP_ROOT . '/app/Controllers/AttendanceController.php';
 require_once APP_ROOT . '/app/Controllers/PaymentController.php';
 require_once APP_ROOT . '/app/Controllers/ReportController.php';
 require_once APP_ROOT . '/app/Controllers/TenantController.php';
+require_once APP_ROOT . '/app/Controllers/CalendarController.php';
 
 // Load models
 require_once APP_ROOT . '/app/Models/BaseModel.php';

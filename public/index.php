@@ -46,6 +46,10 @@ $router->register('courses/store', 'CourseController@store');
 $router->register('courses/edit/([0-9]+)', 'CourseController@edit');
 $router->register('courses/update/([0-9]+)', 'CourseController@update');
 $router->register('courses/delete/([0-9]+)', 'CourseController@delete');
+$router->register('courses/calendar', 'CourseController@calendar');
+
+// Calendar API routes
+$router->register('calendar/addCourseAjax', 'CalendarController@addCourseAjax');
 
 // Membership routes
 $router->register('memberships', 'MembershipController@index');

@@ -45,6 +45,17 @@ class CourseController extends BaseController {
     }
     
     /**
+     * Display course calendar
+     *
+     * @return void
+     */
+    public function calendar() {
+        // Redirect to CalendarController
+        $calendar = new CalendarController();
+        $calendar->index();
+    }
+    
+    /**
      * Display course creation form
      *
      * @return void
