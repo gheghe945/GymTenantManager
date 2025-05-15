@@ -17,7 +17,7 @@ class User extends BaseModel {
      * @return array|false
      */
     public function findUserByEmail($email) {
-        $sql = "SELECT id, tenant_id, name, email, password, role::text as role, created_at, updated_at 
+        $sql = "SELECT id, tenant_id, name, email, password, role::text as role, is_active, created_at, updated_at 
                 FROM {$this->table} WHERE email = :email";
         
         $stmt = $this->db->prepare($sql);
@@ -149,8 +149,8 @@ class User extends BaseModel {
      * @return int|false The ID of the newly created user, or false on failure
      */
     public function create($data) {
-        $sql = "INSERT INTO {$this->table} (tenant_id, name, email, password, role, created_at, updated_at) 
-                VALUES (:tenant_id, :name, :email, :password, :role::user_role, NOW(), NOW()) RETURNING id";
+        $sql = "INSERT INTO {$this->table} (tenant_id, name, email, password, role, is_active, created_at, updated_at) 
+                VALUES (:tenant_id, :name, :email, :password, :role::user_role, TRUE, NOW(), NOW()) RETURNING id";
         
         $stmt = $this->db->prepare($sql);
         

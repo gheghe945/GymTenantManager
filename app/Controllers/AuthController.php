@@ -65,6 +65,13 @@ class AuthController extends BaseController {
                 }
                 
                 if ($user && password_verify($data['password'], $user['password'])) {
+                    // Verifica se l'utente è attivo
+                    if (isset($user['is_active']) && !$user['is_active']) {
+                        $data['password_err'] = 'Account disabilitato. Contattare l\'amministratore.';
+                        $this->render('auth/login', $data);
+                        return;
+                    }
+                    
                     // Create session
                     $this->createUserSession($user);
                     
