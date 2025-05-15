@@ -340,15 +340,18 @@ class UserController extends BaseController {
             }
             
             // Rimuovi i campi di errore e altri campi non del database prima dell'aggiornamento
-            $updateData = $data;
-            unset($updateData['name_err']);
-            unset($updateData['email_err']);
-            unset($updateData['password_err']);
-            unset($updateData['confirm_password_err']);
-            unset($updateData['role_err']);
-            unset($updateData['tenant_id_err']);
-            unset($updateData['tenants']);
-            unset($updateData['isSuperAdmin']);
+            $updateData = [
+                'id' => $data['id'],
+                'name' => $data['name'],
+                'email' => $data['email'],
+                'role' => $data['role'],
+                'tenant_id' => $data['tenant_id']
+            ];
+            
+            // Aggiungi la password solo se è stata impostata
+            if (!empty($data['password'])) {
+                $updateData['password'] = $data['password'];
+            }
             
             // Update user
             if ($this->userModel->update($updateData)) {

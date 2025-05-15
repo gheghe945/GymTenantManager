@@ -168,3 +168,23 @@ function getDbConnection() {
     
     return $pdo;
 }
+
+/**
+ * Database class with singleton pattern for database connection
+ */
+class Database {
+    private static $instance = null;
+    
+    /**
+     * Get database connection instance
+     *
+     * @return PDO
+     */
+    public static function getInstance() {
+        if (self::$instance === null) {
+            self::$instance = getDbConnection();
+        }
+        
+        return self::$instance;
+    }
+}
