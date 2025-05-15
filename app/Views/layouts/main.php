@@ -97,10 +97,25 @@
             <?php elseif (hasRole('GYM_ADMIN')): ?>
             <!-- Menu per GYM_ADMIN come da immagine fornita -->
             <li>
-                <a href="<?= URLROOT ?>/">
+                <a href="#" class="has-submenu">
                     <i class="fas fa-building"></i>
                     <span><?= __('Club') ?></span>
+                    <i class="fas fa-chevron-down submenu-icon"></i>
                 </a>
+                <ul class="submenu">
+                    <li>
+                        <a href="<?= URLROOT ?>/settings">
+                            <i class="fas fa-cog"></i>
+                            <span><?= __('Impostazioni') ?></span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="<?= URLROOT ?>/invites">
+                            <i class="fas fa-user-plus"></i>
+                            <span><?= __('Invita Utente') ?></span>
+                        </a>
+                    </li>
+                </ul>
             </li>
             
             <li>

@@ -79,6 +79,17 @@ $router->register('reports/members', 'ReportController@members');
 $router->register('reports/attendance', 'ReportController@attendance');
 $router->register('reports/revenue', 'ReportController@revenue');
 
+// Settings routes
+$router->register('settings', 'SettingController@index');
+$router->register('settings/saveSmtp', 'SettingController@saveSmtp');
+$router->register('settings/testSmtp', 'SettingController@testSmtp');
+
+// Invite routes
+$router->register('invites', 'InviteController@index');
+$router->register('invites/send', 'InviteController@send');
+$router->register('register/([a-zA-Z0-9]+)', 'InviteController@register');
+$router->register('invites/process/([a-zA-Z0-9]+)', 'InviteController@process');
+
 // Tenant routes (Super Admin only)
 $router->register('tenants', 'TenantController@index');
 $router->register('tenants/create', 'TenantController@create');
