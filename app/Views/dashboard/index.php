@@ -1,5 +1,5 @@
 <?php 
-    $title = 'Dashboard - GymManager';
+    $title = __('Dashboard') . ' - ' . __('GymManager');
     $includeCharts = true;
 ?>
 
@@ -7,11 +7,11 @@
     <div class="card-header">
         <h2>
             <?php if (hasRole('SUPER_ADMIN')): ?>
-                System Dashboard
+                <?= __('System Dashboard') ?>
             <?php elseif (hasRole('GYM_ADMIN')): ?>
-                Gym Dashboard
+                <?= __('Gym Dashboard') ?>
             <?php else: ?>
-                Member Dashboard
+                <?= __('Member Dashboard') ?>
             <?php endif; ?>
         </h2>
     </div>
@@ -26,7 +26,7 @@
         </div>
         <div class="stat-content">
             <h3 class="stat-value"><?= $totalTenants ?></h3>
-            <p class="stat-label">Total Gyms</p>
+            <p class="stat-label"><?= __('Total Gyms') ?></p>
         </div>
     </div>
     
@@ -36,14 +36,14 @@
         </div>
         <div class="stat-content">
             <h3 class="stat-value"><?= $totalUsers ?></h3>
-            <p class="stat-label">Total Users</p>
+            <p class="stat-label"><?= __('Total Users') ?></p>
         </div>
     </div>
 </div>
 
 <div class="card">
     <div class="card-header">
-        <h3>Recent Gyms</h3>
+        <h3><?= __('Recent Gyms') ?></h3>
     </div>
     <div class="card-body">
         <div class="table-responsive">

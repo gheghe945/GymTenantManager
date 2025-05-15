@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="it">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= $title ?? 'GymManager - Multi-tenant Gym Management System' ?></title>
+    <title><?= $title ?? __('GymManager - Multi-tenant Gym Management System') ?></title>
     
     <!-- CSS Styles -->
     <link rel="stylesheet" href="<?= URLROOT ?>/assets/css/style.css">
@@ -26,7 +26,7 @@
                     <?php if (isset($_SESSION['tenant_id']) && isset($tenantName)): ?>
                         <?= $tenantName ?>
                     <?php else: ?>
-                        GymManager
+                        <?= __('GymManager') ?>
                     <?php endif; ?>
                 </div>
                 
@@ -39,10 +39,10 @@
                     <li class="dropdown">
                         <a href="#">
                             <i class="fas fa-user"></i> 
-                            <?= $_SESSION['user_name'] ?? 'User' ?>
+                            <?= $_SESSION['user_name'] ?? __('User') ?>
                         </a>
                         <div class="dropdown-content">
-                            <a href="<?= URLROOT ?>/logout"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                            <a href="<?= URLROOT ?>/logout"><i class="fas fa-sign-out-alt"></i> <?= __('Logout') ?></a>
                         </div>
                     </li>
                 </ul>
@@ -55,13 +55,14 @@
     <?php if (isLoggedIn() && (!isset($hideSidebar) || !$hideSidebar)): ?>
     <!-- Sidebar -->
     <div class="sidebar" id="sidebar">
+        <button class="sidebar-toggle" id="toggle-sidebar">
+            <i class="fas fa-chevron-left"></i>
+        </button>
+        
         <div class="sidebar-header">
             <div class="logo">
                 <i class="fas fa-dumbbell"></i>
-                <span>GymManager</span>
-            </div>
-            <div class="sidebar-close" id="sidebar-close">
-                <i class="fas fa-times"></i>
+                <span><?= __('GymManager') ?></span>
             </div>
         </div>
         
@@ -69,7 +70,7 @@
             <li>
                 <a href="<?= URLROOT ?>/">
                     <i class="fas fa-tachometer-alt"></i>
-                    <span>Dashboard</span>
+                    <span><?= __('Dashboard') ?></span>
                 </a>
             </li>
             
@@ -77,7 +78,7 @@
             <li>
                 <a href="<?= URLROOT ?>/tenants">
                     <i class="fas fa-building"></i>
-                    <span>Gyms</span>
+                    <span><?= __('Gyms') ?></span>
                 </a>
             </li>
             <?php endif; ?>
@@ -85,35 +86,35 @@
             <li>
                 <a href="<?= URLROOT ?>/users">
                     <i class="fas fa-users"></i>
-                    <span>Users</span>
+                    <span><?= __('Users') ?></span>
                 </a>
             </li>
             
             <li>
                 <a href="<?= URLROOT ?>/courses">
                     <i class="fas fa-running"></i>
-                    <span>Courses</span>
+                    <span><?= __('Courses') ?></span>
                 </a>
             </li>
             
             <li>
                 <a href="<?= URLROOT ?>/memberships">
                     <i class="fas fa-id-card"></i>
-                    <span>Memberships</span>
+                    <span><?= __('Memberships') ?></span>
                 </a>
             </li>
             
             <li>
                 <a href="<?= URLROOT ?>/attendance">
                     <i class="fas fa-clipboard-check"></i>
-                    <span>Attendance</span>
+                    <span><?= __('Attendance') ?></span>
                 </a>
             </li>
             
             <li>
                 <a href="<?= URLROOT ?>/payments">
                     <i class="fas fa-credit-card"></i>
-                    <span>Payments</span>
+                    <span><?= __('Payments') ?></span>
                 </a>
             </li>
             
@@ -121,7 +122,7 @@
             <li>
                 <a href="<?= URLROOT ?>/reports">
                     <i class="fas fa-chart-bar"></i>
-                    <span>Reports</span>
+                    <span><?= __('Reports') ?></span>
                 </a>
             </li>
             <?php endif; ?>

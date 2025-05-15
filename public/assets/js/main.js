@@ -31,8 +31,44 @@ document.addEventListener('DOMContentLoaded', function() {
  */
 function initializeSidebar() {
     const sidebarToggle = document.getElementById('sidebar-toggle');
+    const toggleSidebarBtn = document.getElementById('toggle-sidebar');
     const sidebarClose = document.getElementById('sidebar-close');
+    const mainContent = document.querySelector('.main-content');
     const sidebar = document.querySelector('.sidebar');
+    
+    // Controlla se la sidebar è stata collassata in precedenza
+    const sidebarCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+    
+    if (sidebarCollapsed) {
+        sidebar.classList.add('collapsed');
+        mainContent.classList.add('collapsed-content');
+        if (toggleSidebarBtn && toggleSidebarBtn.querySelector('i')) {
+            toggleSidebarBtn.querySelector('i').classList.remove('fa-chevron-left');
+            toggleSidebarBtn.querySelector('i').classList.add('fa-chevron-right');
+        }
+    }
+    
+    // Gestisce il pulsante nella sidebar per collassarla
+    if (toggleSidebarBtn) {
+        toggleSidebarBtn.addEventListener('click', function() {
+            sidebar.classList.toggle('collapsed');
+            mainContent.classList.toggle('collapsed-content');
+            
+            // Cambia l'icona in base allo stato
+            const icon = toggleSidebarBtn.querySelector('i');
+            if (icon) {
+                if (sidebar.classList.contains('collapsed')) {
+                    icon.classList.remove('fa-chevron-left');
+                    icon.classList.add('fa-chevron-right');
+                    localStorage.setItem('sidebarCollapsed', 'true');
+                } else {
+                    icon.classList.remove('fa-chevron-right');
+                    icon.classList.add('fa-chevron-left');
+                    localStorage.setItem('sidebarCollapsed', 'false');
+                }
+            }
+        });
+    }
     
     if (sidebarToggle) {
         sidebarToggle.addEventListener('click', function() {
