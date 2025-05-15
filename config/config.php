@@ -9,8 +9,8 @@
 define('APPROOT', dirname(dirname(__FILE__)));
 
 // URL Root (without trailing slash)
-// Adjust this based on your deployment environment
-define('URLROOT', 'http://' . $_SERVER['HTTP_HOST']);
+// Adjust this based on your deployment environment - using protocol-relative URL
+define('URLROOT', '//' . $_SERVER['HTTP_HOST']);
 
 // Site Name
 define('SITENAME', 'GymManager');
