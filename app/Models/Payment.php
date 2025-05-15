@@ -29,7 +29,7 @@ class Payment extends BaseModel {
      */
     public function getPaymentsByTenantId($tenantId) {
         $sql = "SELECT p.*, u.name as user_name, 
-                IFNULL(m.type, 'N/A') as membership_type 
+                COALESCE(m.type, 'N/A') as membership_type 
                 FROM {$this->table} p 
                 JOIN users u ON p.user_id = u.id 
                 LEFT JOIN memberships m ON p.membership_id = m.id 
@@ -51,7 +51,7 @@ class Payment extends BaseModel {
      * @return array
      */
     public function getPaymentsByUserId($userId, $tenantId) {
-        $sql = "SELECT p.*, IFNULL(m.type, 'N/A') as membership_type 
+        $sql = "SELECT p.*, COALESCE(m.type, 'N/A') as membership_type 
                 FROM {$this->table} p 
                 LEFT JOIN memberships m ON p.membership_id = m.id 
                 WHERE p.user_id = :user_id AND p.tenant_id = :tenant_id 
@@ -74,7 +74,7 @@ class Payment extends BaseModel {
      */
     public function getRecentPayments($tenantId, $limit = 5) {
         $sql = "SELECT p.*, u.name as user_name, 
-                IFNULL(m.type, 'N/A') as membership_type 
+                COALESCE(m.type, 'N/A') as membership_type 
                 FROM {$this->table} p 
                 JOIN users u ON p.user_id = u.id 
                 LEFT JOIN memberships m ON p.membership_id = m.id 
@@ -101,8 +101,8 @@ class Payment extends BaseModel {
     public function getTotalRevenueForMonth($tenantId, $month, $year) {
         $sql = "SELECT SUM(amount) FROM {$this->table} 
                 WHERE tenant_id = :tenant_id 
-                AND MONTH(payment_date) = :month 
-                AND YEAR(payment_date) = :year";
+                AND EXTRACT(MONTH FROM payment_date) = :month 
+                AND EXTRACT(YEAR FROM payment_date) = :year";
         
         $stmt = $this->db->prepare($sql);
         $stmt->bindParam(':tenant_id', $tenantId, PDO::PARAM_INT);
