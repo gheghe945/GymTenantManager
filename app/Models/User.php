@@ -217,4 +217,70 @@ class User extends BaseModel {
         
         return $stmt->execute();
     }
+    
+    /**
+     * Disabilita un utente
+     * 
+     * @param int $userId ID dell'utente
+     * @return bool
+     */
+    public function disableUser($userId) {
+        $sql = "UPDATE {$this->table} SET is_active = false 
+                WHERE id = :user_id";
+        
+        $stmt = $this->db->prepare($sql);
+        $stmt->bindParam(':user_id', $userId, PDO::PARAM_INT);
+        
+        return $stmt->execute();
+    }
+    
+    /**
+     * Abilita un utente
+     * 
+     * @param int $userId ID dell'utente
+     * @return bool
+     */
+    public function enableUser($userId) {
+        $sql = "UPDATE {$this->table} SET is_active = true 
+                WHERE id = :user_id";
+        
+        $stmt = $this->db->prepare($sql);
+        $stmt->bindParam(':user_id', $userId, PDO::PARAM_INT);
+        
+        return $stmt->execute();
+    }
+    
+    /**
+     * Verifica se un utente è attivo
+     * 
+     * @param int $userId ID dell'utente
+     * @return bool
+     */
+    public function isUserActive($userId) {
+        $sql = "SELECT is_active FROM {$this->table} WHERE id = :user_id";
+        
+        $stmt = $this->db->prepare($sql);
+        $stmt->bindParam(':user_id', $userId, PDO::PARAM_INT);
+        $stmt->execute();
+        
+        return (bool)$stmt->fetchColumn();
+    }
+    
+    /**
+     * Reimposta la password di un utente
+     * 
+     * @param int $userId ID dell'utente
+     * @param string $newPassword Nuova password (già hashata)
+     * @return bool
+     */
+    public function resetPassword($userId, $newPassword) {
+        $sql = "UPDATE {$this->table} SET password = :password 
+                WHERE id = :user_id";
+        
+        $stmt = $this->db->prepare($sql);
+        $stmt->bindParam(':password', $newPassword, PDO::PARAM_STR);
+        $stmt->bindParam(':user_id', $userId, PDO::PARAM_INT);
+        
+        return $stmt->execute();
+    }
 }

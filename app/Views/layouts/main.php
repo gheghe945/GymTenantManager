@@ -97,10 +97,9 @@
             <?php elseif (hasRole('GYM_ADMIN')): ?>
             <!-- Menu per GYM_ADMIN come da immagine fornita -->
             <li>
-                <a href="#" class="has-submenu">
+                <a href="<?= URLROOT ?>/">
                     <i class="fas fa-building"></i>
                     <span><?= __('Club') ?></span>
-                    <i class="fas fa-chevron-down submenu-icon"></i>
                 </a>
             </li>
             
