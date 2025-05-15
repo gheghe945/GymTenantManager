@@ -42,6 +42,7 @@ $router->register('users/disable/([0-9]+)', 'UserController@disable');
 $router->register('users/enable/([0-9]+)', 'UserController@enable');
 $router->register('users/resetPassword/([0-9]+)', 'UserController@resetPassword');
 $router->register('users/updatePassword/([0-9]+)', 'UserController@updatePassword');
+$router->register('users/invite', 'InviteController@index');
 
 // Course routes
 $router->register('courses', 'CourseController@index');
