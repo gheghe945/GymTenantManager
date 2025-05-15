@@ -61,22 +61,23 @@ class SmtpSetting extends BaseModel {
             if ($existingSettings) {
                 // Aggiorna le impostazioni esistenti
                 $query = "UPDATE {$this->table} SET 
-                          smtp_host = :host,
-                          smtp_port = :port,
-                          smtp_username = :username,
-                          smtp_password = :password,
-                          smtp_encryption = :encryption,
-                          smtp_from_email = :from_email,
-                          smtp_from_name = :from_name
+                          host = :host,
+                          port = :port,
+                          username = :username,
+                          password = :password,
+                          encryption = :encryption,
+                          sender_email = :from_email,
+                          sender_name = :from_name,
+                          active = TRUE
                           WHERE tenant_id = :tenant_id";
             } else {
                 // Inserisci nuove impostazioni
                 $query = "INSERT INTO {$this->table} 
-                          (tenant_id, smtp_host, smtp_port, smtp_username, smtp_password, 
-                           smtp_encryption, smtp_from_email, smtp_from_name) 
+                          (tenant_id, host, port, username, password, 
+                           encryption, sender_email, sender_name, active, created_at, updated_at) 
                           VALUES 
                           (:tenant_id, :host, :port, :username, :password, 
-                           :encryption, :from_email, :from_name)";
+                           :encryption, :from_email, :from_name, TRUE, NOW(), NOW())";
             }
             
             // Prepara lo statement
@@ -115,9 +116,9 @@ class SmtpSetting extends BaseModel {
         }
         
         // Verifica che siano impostati i campi obbligatori
-        return !empty($settings['smtp_host']) && 
-               !empty($settings['smtp_port']) && 
-               !empty($settings['smtp_from_email']);
+        return !empty($settings['host']) && 
+               !empty($settings['port']) && 
+               !empty($settings['sender_email']);
     }
     
     /**
@@ -137,27 +138,27 @@ class SmtpSetting extends BaseModel {
         try {
             // Configura il mailer con SMTP
             $mailer->isSMTP();
-            $mailer->Host = $settings['smtp_host'];
-            $mailer->Port = $settings['smtp_port'];
+            $mailer->Host = $settings['host'];
+            $mailer->Port = $settings['port'];
             
             // Autenticazione SMTP se sono forniti username e password
-            if (!empty($settings['smtp_username'])) {
+            if (!empty($settings['username'])) {
                 $mailer->SMTPAuth = true;
-                $mailer->Username = $settings['smtp_username'];
-                $mailer->Password = $settings['smtp_password'];
+                $mailer->Username = $settings['username'];
+                $mailer->Password = $settings['password'];
             } else {
                 $mailer->SMTPAuth = false;
             }
             
             // Crittografia SMTP
-            if (!empty($settings['smtp_encryption'])) {
-                $mailer->SMTPSecure = $settings['smtp_encryption'];
+            if (!empty($settings['encryption'])) {
+                $mailer->SMTPSecure = $settings['encryption'];
             }
             
             // Imposta mittente
             $mailer->setFrom(
-                $settings['smtp_from_email'], 
-                !empty($settings['smtp_from_name']) ? $settings['smtp_from_name'] : ''
+                $settings['sender_email'], 
+                !empty($settings['sender_name']) ? $settings['sender_name'] : ''
             );
             
             return true;

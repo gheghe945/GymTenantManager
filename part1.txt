@@ -1,0 +1,107 @@
+<?php
+/**
+ * User Controller
+ */
+class UserController extends BaseController {
+    /**
+     * User model instance
+     *
+     * @var User
+     */
+    private $userModel;
+    
+    /**
+     * Middleware configuration
+     */
+    protected $middleware = [
+        'AuthMiddleware' => ['*'],
+        'RoleMiddleware' => ['*']
+    ];
+    
+    /**
+     * Constructor
+     */
+    public function __construct() {
+        $this->userModel = new User();
+    }
+    
+    /**
+     * Display users list
+     *
+     * @return void
+     */
+    public function index() {
+        // Check role-based permissions
+        if (!hasRole('SUPER_ADMIN') && !hasRole('GYM_ADMIN')) {
+            redirect('dashboard');
+        }
+        
+        $tenantId = getCurrentTenantId();
+        
+        // Get users based on role
+        if (hasRole('SUPER_ADMIN')) {
+            $users = $this->userModel->getAllUsers();
+        } else {
+            $users = $this->userModel->getUsersByTenantId($tenantId);
+        }
+        
+        $data = [
+            'users' => $users,
+            'isSuperAdmin' => hasRole('SUPER_ADMIN')
+        ];
+        
+        $this->render('users/index', $data);
+    }
+    
+    /**
+     * Display user creation form
+     *
+     * @return void
+     */
+    public function create() {
+        // Check role-based permissions
+        if (!hasRole('SUPER_ADMIN') && !hasRole('GYM_ADMIN')) {
+            redirect('dashboard');
+        }
+        
+        // Get tenants list if SUPER_ADMIN
+        $tenants = [];
+        if (hasRole('SUPER_ADMIN')) {
+            $tenantModel = new Tenant();
+            $tenants = $tenantModel->getAllTenants();
+        }
+        
+        $data = [
+            'name' => '',
+            'email' => '',
+            'role' => 'MEMBER', // Default role
+            'tenant_id' => getCurrentTenantId(), // Default tenant
+            'name_err' => '',
+            'email_err' => '',
+            'password_err' => '',
+            'role_err' => '',
+            'tenant_id_err' => '',
+            'tenants' => $tenants,
+            'isSuperAdmin' => hasRole('SUPER_ADMIN')
+        ];
+        
+        $this->render('users/create', $data);
+    }
+    
+    /**
+     * Store new user
+     *
+     * @return void
+     */
+    public function store() {
+        // Check role-based permissions
+        if (!hasRole('SUPER_ADMIN') && !hasRole('GYM_ADMIN')) {
+            redirect('dashboard');
+        }
+        
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            redirect('users');
+        }
+        
+        // Sanitize POST data
+        $_POST = filter_input_array(INPUT_POST, FILTER_SANITIZE_STRING);
