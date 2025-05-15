@@ -100,7 +100,23 @@ class User extends BaseModel {
      * @return int
      */
     public function countUsers() {
-        return $this->count();
+        $tenantId = getCurrentTenantId();
+        $sql = "SELECT COUNT(*) as total FROM {$this->table}";
+        
+        if ($tenantId !== null) {
+            $sql .= " WHERE {$this->tenantColumn} = :tenant_id";
+        }
+        
+        $stmt = $this->db->prepare($sql);
+        
+        if ($tenantId !== null) {
+            $stmt->bindParam(':tenant_id', $tenantId, PDO::PARAM_INT);
+        }
+        
+        $stmt->execute();
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        return (int)$result['total'];
     }
     
     /**

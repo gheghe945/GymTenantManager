@@ -67,7 +67,12 @@ class Tenant extends BaseModel {
      * @return int
      */
     public function countTenants() {
-        return $this->count();
+        $sql = "SELECT COUNT(*) as total FROM {$this->table}";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute();
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        return (int)$result['total'];
     }
     
     /**
