@@ -23,6 +23,7 @@ class TenantController extends BaseController {
      */
     public function __construct() {
         $this->tenantModel = new Tenant();
+        $this->userModel = new User();
     }
     
     /**
@@ -66,7 +67,13 @@ class TenantController extends BaseController {
             'is_active' => true,
             'name_err' => '',
             'subdomain_err' => '',
-            'email_err' => ''
+            'email_err' => '',
+            'admin_name' => '',
+            'admin_email' => '',
+            'admin_password' => '',
+            'admin_name_err' => '',
+            'admin_email_err' => '',
+            'admin_password_err' => ''
         ];
         
         $this->render('tenants/create', $data);
@@ -98,9 +105,16 @@ class TenantController extends BaseController {
             'phone' => trim($_POST['phone']),
             'email' => trim($_POST['email']),
             'is_active' => isset($_POST['is_active']) ? 1 : 0,
+            'admin_name' => isset($_POST['admin_name']) ? trim($_POST['admin_name']) : '',
+            'admin_email' => isset($_POST['admin_email']) ? trim($_POST['admin_email']) : '',
+            'admin_password' => isset($_POST['admin_password']) ? $_POST['admin_password'] : '',
+            'admin_password_confirm' => isset($_POST['admin_password_confirm']) ? $_POST['admin_password_confirm'] : '',
             'name_err' => '',
             'subdomain_err' => '',
-            'email_err' => ''
+            'email_err' => '',
+            'admin_name_err' => '',
+            'admin_email_err' => '',
+            'admin_password_err' => ''
         ];
         
         // Validate name
