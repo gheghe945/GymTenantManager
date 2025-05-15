@@ -28,8 +28,8 @@ class BaseController {
      * Constructor
      */
     public function __construct() {
-        global $db;
-        $this->db = $db;
+        // Usa la classe Database che abbiamo definito
+        $this->db = Database::getInstance();
     }
     
     /**
