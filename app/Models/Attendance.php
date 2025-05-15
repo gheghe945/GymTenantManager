@@ -201,6 +201,31 @@ class Attendance extends BaseModel {
     }
     
     /**
+     * Ottieni tutte le presenze in un intervallo di date
+     *
+     * @param int $tenantId ID del tenant
+     * @param string $startDate Data di inizio (YYYY-MM-DD)
+     * @param string $endDate Data di fine (YYYY-MM-DD)
+     * @return array
+     */
+    public function getAttendanceByDateRange($tenantId, $startDate, $endDate) {
+        $sql = "SELECT a.*, u.name as user_name, c.name as course_name 
+                FROM {$this->table} a 
+                JOIN users u ON a.user_id = u.id 
+                LEFT JOIN courses c ON a.course_id = c.id 
+                WHERE a.tenant_id = :tenant_id AND a.date BETWEEN :start_date AND :end_date 
+                ORDER BY a.date, a.time_in";
+        
+        $stmt = $this->db->prepare($sql);
+        $stmt->bindParam(':tenant_id', $tenantId, PDO::PARAM_INT);
+        $stmt->bindParam(':start_date', $startDate, PDO::PARAM_STR);
+        $stmt->bindParam(':end_date', $endDate, PDO::PARAM_STR);
+        $stmt->execute();
+        
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+    
+    /**
      * Check if user has already checked in for the day
      *
      * @param int $userId User ID

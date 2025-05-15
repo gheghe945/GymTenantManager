@@ -225,6 +225,7 @@ header {
 
 .sidebar-menu li {
   margin-bottom: 5px;
+  position: relative;
 }
 
 .sidebar-menu a {
@@ -243,8 +244,41 @@ header {
   color: var(--white);
 }
 
-.sidebar-menu svg, .sidebar-menu i {
+.sidebar-menu svg, .sidebar-menu i:not(.submenu-icon) {
   margin-right: 10px;
+}
+
+/* Stili per i sottomenu */
+.has-submenu {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.has-submenu .submenu-icon {
+  margin-left: auto;
+  transition: transform 0.3s;
+}
+
+.sidebar-menu .submenu {
+  list-style: none;
+  padding: 0;
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.5s ease;
+}
+
+.sidebar-menu .submenu.open {
+  max-height: 500px;
+}
+
+.sidebar-menu .submenu li {
+  margin-bottom: 0;
+}
+
+.sidebar-menu .submenu a {
+  padding-left: 45px;
+  font-size: 0.9rem;
 }
 
 .sidebar-header {

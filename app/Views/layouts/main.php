@@ -67,62 +67,153 @@
         </div>
         
         <ul class="sidebar-menu">
+            <?php if (hasRole('SUPER_ADMIN')): ?>
+            <!-- Menu per SUPER_ADMIN -->
             <li>
                 <a href="<?= URLROOT ?>/">
                     <i class="fas fa-tachometer-alt"></i>
                     <span><?= __('Dashboard') ?></span>
                 </a>
             </li>
-            
-            <?php if (hasRole('SUPER_ADMIN')): ?>
             <li>
                 <a href="<?= URLROOT ?>/tenants">
                     <i class="fas fa-building"></i>
                     <span><?= __('Gyms') ?></span>
                 </a>
             </li>
-            <?php endif; ?>
-            
             <li>
                 <a href="<?= URLROOT ?>/users">
                     <i class="fas fa-users"></i>
                     <span><?= __('Users') ?></span>
                 </a>
             </li>
+            <li>
+                <a href="<?= URLROOT ?>/reports">
+                    <i class="fas fa-chart-bar"></i>
+                    <span><?= __('Reports') ?></span>
+                </a>
+            </li>
             
+            <?php elseif (hasRole('GYM_ADMIN')): ?>
+            <!-- Menu per GYM_ADMIN come da immagine fornita -->
+            <li>
+                <a href="#" class="has-submenu">
+                    <i class="fas fa-building"></i>
+                    <span><?= __('Club') ?></span>
+                    <i class="fas fa-chevron-down submenu-icon"></i>
+                </a>
+            </li>
+            
+            <li>
+                <a href="<?= URLROOT ?>/">
+                    <i class="fas fa-th-large"></i>
+                    <span><?= __('Dashboard') ?></span>
+                </a>
+            </li>
+            
+            <li>
+                <a href="<?= URLROOT ?>/payments">
+                    <i class="far fa-credit-card"></i>
+                    <span><?= __('Crediti') ?></span>
+                </a>
+            </li>
+            
+            <li>
+                <a href="<?= URLROOT ?>/memberships">
+                    <i class="far fa-clipboard"></i>
+                    <span><?= __('Abbonamenti') ?></span>
+                </a>
+            </li>
+            
+            <li>
+                <a href="<?= URLROOT ?>/payments/history">
+                    <i class="fas fa-chart-line"></i>
+                    <span><?= __('Movimenti') ?></span>
+                </a>
+            </li>
+            
+            <li>
+                <a href="<?= URLROOT ?>/settings">
+                    <i class="fas fa-cog"></i>
+                    <span><?= __('Impostazioni') ?></span>
+                </a>
+            </li>
+            
+            <li>
+                <a href="#" class="has-submenu">
+                    <i class="fas fa-heartbeat"></i>
+                    <span><?= __('Attività') ?></span>
+                    <i class="fas fa-chevron-down submenu-icon"></i>
+                </a>
+                <ul class="submenu">
+                    <li>
+                        <a href="<?= URLROOT ?>/courses/calendar">
+                            <i class="far fa-calendar"></i>
+                            <span><?= __('Calendario') ?></span>
+                        </a>
+                    </li>
+                </ul>
+            </li>
+            
+            <li>
+                <a href="#" class="has-submenu">
+                    <i class="fas fa-users"></i>
+                    <span><?= __('Utenti') ?></span>
+                    <i class="fas fa-chevron-down submenu-icon"></i>
+                </a>
+                <ul class="submenu">
+                    <li>
+                        <a href="<?= URLROOT ?>/users">
+                            <i class="fas fa-list"></i>
+                            <span><?= __('Lista Utenti') ?></span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="<?= URLROOT ?>/users/invite">
+                            <i class="fas fa-user-plus"></i>
+                            <span><?= __('Invita Utente') ?></span>
+                        </a>
+                    </li>
+                </ul>
+            </li>
+            
+            <li>
+                <a href="<?= URLROOT ?>/api">
+                    <i class="fas fa-code"></i>
+                    <span><?= __('API') ?></span>
+                </a>
+            </li>
+
+            <?php else: ?>
+            <!-- Menu per MEMBER -->
+            <li>
+                <a href="<?= URLROOT ?>/">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <span><?= __('Dashboard') ?></span>
+                </a>
+            </li>
             <li>
                 <a href="<?= URLROOT ?>/courses">
                     <i class="fas fa-running"></i>
                     <span><?= __('Courses') ?></span>
                 </a>
             </li>
-            
             <li>
-                <a href="<?= URLROOT ?>/memberships">
+                <a href="<?= URLROOT ?>/memberships/my">
                     <i class="fas fa-id-card"></i>
-                    <span><?= __('Memberships') ?></span>
+                    <span><?= __('My Membership') ?></span>
                 </a>
             </li>
-            
             <li>
-                <a href="<?= URLROOT ?>/attendance">
+                <a href="<?= URLROOT ?>/attendance/my">
                     <i class="fas fa-clipboard-check"></i>
-                    <span><?= __('Attendance') ?></span>
+                    <span><?= __('My Attendance') ?></span>
                 </a>
             </li>
-            
             <li>
-                <a href="<?= URLROOT ?>/payments">
+                <a href="<?= URLROOT ?>/payments/my">
                     <i class="fas fa-credit-card"></i>
-                    <span><?= __('Payments') ?></span>
-                </a>
-            </li>
-            
-            <?php if (hasRole('SUPER_ADMIN') || hasRole('GYM_ADMIN')): ?>
-            <li>
-                <a href="<?= URLROOT ?>/reports">
-                    <i class="fas fa-chart-bar"></i>
-                    <span><?= __('Reports') ?></span>
+                    <span><?= __('My Payments') ?></span>
                 </a>
             </li>
             <?php endif; ?>

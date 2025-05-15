@@ -98,9 +98,60 @@ function initializeSidebar() {
         }
     });
     
+    // Inizializza i sottomenu
+    const submenuTriggers = document.querySelectorAll('.has-submenu');
+    
+    // Apri il sottomenu attivo
+    const openActiveSubmenu = () => {
+        const currentPath = window.location.pathname;
+        const submenuLinks = document.querySelectorAll('.submenu a');
+        
+        submenuLinks.forEach(link => {
+            const href = link.getAttribute('href');
+            if (href && currentPath.includes(href)) {
+                const submenu = link.closest('.submenu');
+                const parentLink = submenu.previousElementSibling;
+                
+                // Apri il sottomenu
+                submenu.classList.add('open');
+                
+                // Ruota l'icona
+                const icon = parentLink.querySelector('.submenu-icon');
+                if (icon) {
+                    icon.style.transform = 'rotate(180deg)';
+                }
+                
+                // Aggiungi classe attiva al link
+                link.classList.add('active');
+            }
+        });
+    };
+    
+    // Gestisci clic sui trigger dei sottomenu
+    submenuTriggers.forEach(trigger => {
+        trigger.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            const submenu = this.nextElementSibling;
+            const icon = this.querySelector('.submenu-icon');
+            
+            // Toggle del sottomenu
+            submenu.classList.toggle('open');
+            
+            // Ruota l'icona
+            if (icon) {
+                if (submenu.classList.contains('open')) {
+                    icon.style.transform = 'rotate(180deg)';
+                } else {
+                    icon.style.transform = 'rotate(0)';
+                }
+            }
+        });
+    });
+    
     // Set active menu item based on current page
     const currentPath = window.location.pathname;
-    const menuLinks = document.querySelectorAll('.sidebar-menu a');
+    const menuLinks = document.querySelectorAll('.sidebar-menu > li > a:not(.has-submenu)');
     
     menuLinks.forEach(link => {
         const href = link.getAttribute('href');
@@ -110,6 +161,9 @@ function initializeSidebar() {
             link.classList.add('active');
         }
     });
+    
+    // Apri i sottomenu attivi all'avvio
+    openActiveSubmenu();
 }
 
 /**
