@@ -165,14 +165,16 @@ class SettingController extends BaseController {
             $mail->AltBody = 'Questo è un messaggio di test per verificare le impostazioni SMTP di GymManager.';
             
             // Invia l'email
-            $mail->send();
-            
-            if ($this->isAjax()) {
-                $this->json(['success' => true, 'message' => 'Email di test inviata con successo!']);
-                return;
+            if ($mail->send()) {
+                if ($this->isAjax()) {
+                    $this->json(['success' => true, 'message' => 'Email di test inviata con successo!']);
+                    return;
+                }
+                
+                flash('smtp_success', 'Email di test inviata con successo!', 'alert alert-success');
+            } else {
+                throw new Exception($mail->ErrorInfo);
             }
-            
-            flash('smtp_success', 'Email di test inviata con successo!', 'alert alert-success');
         } catch (Exception $e) {
             if ($this->isAjax()) {
                 $this->json(['success' => false, 'message' => 'Errore nell\'invio dell\'email: ' . $mail->ErrorInfo]);

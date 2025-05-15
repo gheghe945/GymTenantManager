@@ -123,7 +123,7 @@ class SmtpSetting extends BaseModel {
     /**
      * Configura PHPMailer con le impostazioni SMTP di un tenant
      *
-     * @param PHPMailer $mailer Istanza di PHPMailer
+     * @param \PHPMailer\PHPMailer\PHPMailer $mailer Istanza di PHPMailer
      * @param int $tenant_id ID del tenant
      * @return bool True se la configurazione è riuscita, altrimenti false
      */

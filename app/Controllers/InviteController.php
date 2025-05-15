@@ -306,7 +306,7 @@ class InviteController extends BaseController {
     private function sendInviteEmail($invite, $tenant_id) {
         try {
             // Crea una nuova istanza di PHPMailer
-            $mail = new PHPMailer(true);
+            $mail = new \PHPMailer\PHPMailer\PHPMailer(true);
             
             // Configura PHPMailer con le impostazioni SMTP
             if (!$this->smtpModel->configurePHPMailer($mail, $tenant_id)) {
@@ -350,7 +350,12 @@ class InviteController extends BaseController {
             ";
             
             // Invia l'email
-            return $mail->send();
+            if ($mail->send()) {
+                return true;
+            } else {
+                error_log("Errore nell'invio dell'email di invito: " . $mail->ErrorInfo);
+                return false;
+            }
         } catch (Exception $e) {
             error_log("Errore nell'invio dell'email di invito: " . $e->getMessage());
             return false;
