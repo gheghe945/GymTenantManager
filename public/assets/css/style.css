@@ -180,6 +180,42 @@ header {
   transition: all 0.3s ease;
   z-index: 1000;
   padding-top: 60px;
+  box-shadow: 3px 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.sidebar.collapsed {
+  width: 60px;
+  overflow: hidden;
+}
+
+.sidebar.collapsed .sidebar-menu span {
+  display: none;
+}
+
+.sidebar.collapsed .sidebar-menu i,
+.sidebar.collapsed .sidebar-menu svg {
+  margin-right: 0;
+}
+
+.sidebar-toggle {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: transparent;
+  border: none;
+  color: var(--white);
+  font-size: 1.2rem;
+  cursor: pointer;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s;
+}
+
+.sidebar-toggle:hover {
+  color: var(--primary-color);
 }
 
 .sidebar-menu {
@@ -198,6 +234,8 @@ header {
   color: var(--white);
   transition: all 0.3s;
   text-decoration: none;
+  border-radius: 4px;
+  margin: 0 5px;
 }
 
 .sidebar-menu a:hover, .sidebar-menu a.active {

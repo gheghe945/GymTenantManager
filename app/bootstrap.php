@@ -22,6 +22,7 @@ session_start();
 // Load configurations
 require_once APP_ROOT . '/config/config.php';
 require_once APP_ROOT . '/config/database.php';
+require_once APP_ROOT . '/config/translations.php';
 
 // Load core classes
 require_once APP_ROOT . '/app/Router.php';
