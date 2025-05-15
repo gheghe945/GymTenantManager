@@ -6,12 +6,18 @@
  * needed for the application to run
  */
 
-// Start session
-session_start();
-
 // Error handling
 ini_set('display_errors', 1);
 error_reporting(E_ALL);
+
+// Session lifetime in seconds (30 days)
+ini_set('session.gc_maxlifetime', 60 * 60 * 24 * 30);
+
+// Session cookie lifetime in seconds (30 days)
+ini_set('session.cookie_lifetime', 60 * 60 * 24 * 30);
+
+// Start session
+session_start();
 
 // Load configurations
 require_once APP_ROOT . '/config/config.php';
@@ -56,8 +62,16 @@ require_once APP_ROOT . '/app/Middleware/RoleMiddleware.php';
  * @return void
  */
 function redirect($page) {
-    header('Location: ' . URLROOT . '/' . $page);
-    exit;
+    // Check if headers have been sent
+    if (!headers_sent()) {
+        header('Location: ' . URLROOT . '/' . $page);
+        exit;
+    } else {
+        // JavaScript fallback when headers have been sent
+        echo '<script>window.location.href="' . URLROOT . '/' . $page . '";</script>';
+        echo '<noscript><meta http-equiv="refresh" content="0;url=' . URLROOT . '/' . $page . '"></noscript>';
+        exit;
+    }
 }
 
 /**

@@ -21,8 +21,4 @@ define('APPVERSION', '1.0.0');
 // Default timezone
 date_default_timezone_set('UTC');
 
-// Session lifetime in seconds (30 days)
-ini_set('session.gc_maxlifetime', 60 * 60 * 24 * 30);
-
-// Session cookie lifetime in seconds (30 days)
-ini_set('session.cookie_lifetime', 60 * 60 * 24 * 30);
+// Session configuration (do not set here - moved to bootstrap.php)
