@@ -18,6 +18,21 @@ class BaseController {
     protected $middleware = [];
     
     /**
+     * Database connection
+     *
+     * @var PDO
+     */
+    protected $db;
+    
+    /**
+     * Constructor
+     */
+    public function __construct() {
+        global $db;
+        $this->db = $db;
+    }
+    
+    /**
      * Get middleware configuration for the controller
      *
      * @return array
