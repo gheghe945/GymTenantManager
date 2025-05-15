@@ -1,6 +1,6 @@
 <?php
 // Carica l'autoloader di Composer
-require_once 'vendor/autoload.php';
+require_once APP_ROOT . '/vendor/autoload.php';
 
 // Importa la classe PHPMailer
 use PHPMailer\PHPMailer\PHPMailer;

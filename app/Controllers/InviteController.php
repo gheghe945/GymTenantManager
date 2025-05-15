@@ -1,6 +1,6 @@
 <?php
 // Carica l'autoloader di Composer
-require_once 'vendor/autoload.php';
+require_once APP_ROOT . '/vendor/autoload.php';
 
 // Importa la classe PHPMailer
 use PHPMailer\PHPMailer\PHPMailer;
@@ -120,7 +120,10 @@ class InviteController extends BaseController {
         }
         
         // Crea l'invito
-        $invite = $this->inviteModel->create($email, $tenant_id);
+        $invite = $this->inviteModel->create([
+            'email' => $email,
+            'tenant_id' => $tenant_id
+        ]);
         
         if (!$invite) {
             flash('invite_message', 'Impossibile creare l\'invito. Riprova.', 'alert alert-danger');

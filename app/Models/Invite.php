@@ -20,11 +20,24 @@ class Invite extends BaseModel {
     /**
      * Crea un nuovo invito
      *
+     * @param array $data Dati dell'invito (email, tenant_id)
+     * @return array|false Dati dell'invito creato o false in caso di errore
+     */
+    public function create($data) {
+        if (isset($data['email']) && isset($data['tenant_id'])) {
+            return $this->createInvite($data['email'], $data['tenant_id']);
+        }
+        return false;
+    }
+    
+    /**
+     * Crea un nuovo invito (metodo specifico)
+     *
      * @param string $email Email dell'utente da invitare
      * @param int $tenant_id ID del tenant
      * @return array|false Dati dell'invito creato o false in caso di errore
      */
-    public function create($email, $tenant_id) {
+    public function createInvite($email, $tenant_id) {
         try {
             // Genera un token casuale
             $token = bin2hex(random_bytes(16));

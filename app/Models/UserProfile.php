@@ -91,11 +91,57 @@ class UserProfile extends BaseModel {
     /**
      * Aggiorna il profilo di un utente
      *
+     * @param array $data Dati del profilo da aggiornare (deve includere 'id')
+     * @param int|null $tenantId ID del tenant (non utilizzato per i profili utente)
+     * @return bool True se l'aggiornamento è riuscito, altrimenti false
+     */
+    public function update($data, $tenantId = null) {
+        // Verifica che sia presente l'ID
+        if (!isset($data['id'])) {
+            return false;
+        }
+        
+        try {
+            // Recupera l'ID
+            $id = $data['id'];
+            unset($data['id']);
+            
+            // Costruisci la parte SET della query
+            $set = '';
+            foreach ($data as $key => $value) {
+                $set .= "{$key} = :{$key}, ";
+            }
+            $set = rtrim($set, ', ');
+            
+            // Prepara la query
+            $query = "UPDATE {$this->table} SET {$set} WHERE id = :id";
+            
+            // Prepara lo statement
+            $stmt = $this->db->prepare($query);
+            
+            // Bind dei parametri
+            foreach ($data as $key => $value) {
+                $stmt->bindValue(':' . $key, $value);
+            }
+            $stmt->bindParam(':id', $id, PDO::PARAM_INT);
+            
+            // Esegui la query
+            return $stmt->execute();
+        } catch (PDOException $e) {
+            // Log dell'errore
+            error_log("Errore nell'aggiornamento del profilo utente: " . $e->getMessage());
+            return false;
+        }
+    }
+    
+    /**
+     * Aggiorna il profilo di un utente tramite user_id
+     *
      * @param int $user_id ID dell'utente
      * @param array $data Dati del profilo da aggiornare
      * @return bool True se l'aggiornamento è riuscito, altrimenti false
      */
-    public function update($user_id, $data) {
+    public function updateByUserId($user_id, $data) {
         try {
             // Prepara la query
             $query = "UPDATE {$this->table} SET 

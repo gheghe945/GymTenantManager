@@ -39,6 +39,8 @@ require_once APP_ROOT . '/app/Controllers/PaymentController.php';
 require_once APP_ROOT . '/app/Controllers/ReportController.php';
 require_once APP_ROOT . '/app/Controllers/TenantController.php';
 require_once APP_ROOT . '/app/Controllers/CalendarController.php';
+require_once APP_ROOT . '/app/Controllers/SettingController.php';
+require_once APP_ROOT . '/app/Controllers/InviteController.php';
 
 // Load models
 require_once APP_ROOT . '/app/Models/BaseModel.php';
@@ -48,6 +50,9 @@ require_once APP_ROOT . '/app/Models/Course.php';
 require_once APP_ROOT . '/app/Models/Membership.php';
 require_once APP_ROOT . '/app/Models/Attendance.php';
 require_once APP_ROOT . '/app/Models/Payment.php';
+require_once APP_ROOT . '/app/Models/Invite.php';
+require_once APP_ROOT . '/app/Models/SmtpSetting.php';
+require_once APP_ROOT . '/app/Models/UserProfile.php';
 
 // Load middleware
 require_once APP_ROOT . '/app/Middleware/MiddlewareInterface.php';
