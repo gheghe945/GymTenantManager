@@ -86,7 +86,7 @@ class Membership extends BaseModel {
      * @return int
      */
     public function countActiveMemberships($tenantId) {
-        $whereClause = 'tenant_id = :tenant_id AND status = :status AND end_date >= CURDATE()';
+        $whereClause = 'tenant_id = :tenant_id AND status = :status AND end_date >= CURRENT_DATE';
         $params = [
             'tenant_id' => $tenantId,
             'status' => 'active'
@@ -102,7 +102,7 @@ class Membership extends BaseModel {
      * @return int
      */
     public function countExpiredMemberships($tenantId) {
-        $whereClause = 'tenant_id = :tenant_id AND (status = :status OR end_date < CURDATE())';
+        $whereClause = 'tenant_id = :tenant_id AND (status = :status OR end_date < CURRENT_DATE)';
         $params = [
             'tenant_id' => $tenantId,
             'status' => 'expired'
