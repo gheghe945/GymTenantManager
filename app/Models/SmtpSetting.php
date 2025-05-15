@@ -4,161 +4,166 @@
  */
 class SmtpSetting extends BaseModel {
     /**
-     * The table name in the database
+     * Nome della tabella
      *
      * @var string
      */
     protected $table = 'smtp_settings';
     
     /**
+     * Costruttore
+     */
+    public function __construct() {
+        parent::__construct();
+    }
+    
+    /**
      * Ottiene le impostazioni SMTP per un tenant
      *
-     * @param int $tenantId ID del tenant
-     * @return array|false
+     * @param int $tenant_id ID del tenant
+     * @return array|false Impostazioni SMTP o false se non trovate
      */
-    public function getByTenantId($tenantId) {
-        $sql = "SELECT * FROM {$this->table} WHERE tenant_id = :tenant_id";
-        
-        $stmt = $this->db->prepare($sql);
-        $stmt->bindParam(':tenant_id', $tenantId, PDO::PARAM_INT);
-        $stmt->execute();
-        
-        return $stmt->fetch(PDO::FETCH_ASSOC);
-    }
-    
-    /**
-     * Crea o aggiorna le impostazioni SMTP per un tenant
-     *
-     * @param array $data Dati delle impostazioni SMTP
-     * @return bool
-     */
-    public function saveSettings($data) {
-        // Controlla se esistono già impostazioni per questo tenant
-        $existingSettings = $this->getByTenantId($data['tenant_id']);
-        
-        if ($existingSettings) {
-            // Aggiorna le impostazioni esistenti
-            return $this->update($data);
-        } else {
-            // Crea nuove impostazioni
-            return $this->create($data) ? true : false;
-        }
-    }
-    
-    /**
-     * Crea nuove impostazioni SMTP
-     *
-     * @param array $data Dati delle impostazioni SMTP
-     * @return int|false L'ID delle impostazioni create, o false in caso di errore
-     */
-    public function create($data) {
-        $sql = "INSERT INTO {$this->table} (tenant_id, host, port, username, password, sender_name, sender_email, encryption, active, created_at, updated_at) 
-                VALUES (:tenant_id, :host, :port, :username, :password, :sender_name, :sender_email, :encryption, :active, NOW(), NOW()) RETURNING id";
-        
-        $stmt = $this->db->prepare($sql);
-        
-        $stmt->bindParam(':tenant_id', $data['tenant_id'], PDO::PARAM_INT);
-        $stmt->bindParam(':host', $data['host'], PDO::PARAM_STR);
-        $stmt->bindParam(':port', $data['port'], PDO::PARAM_INT);
-        $stmt->bindParam(':username', $data['username'], PDO::PARAM_STR);
-        $stmt->bindParam(':password', $data['password'], PDO::PARAM_STR);
-        $stmt->bindParam(':sender_name', $data['sender_name'], PDO::PARAM_STR);
-        $stmt->bindParam(':sender_email', $data['sender_email'], PDO::PARAM_STR);
-        $stmt->bindParam(':encryption', $data['encryption'], PDO::PARAM_STR);
-        $stmt->bindParam(':active', $data['active'], PDO::PARAM_BOOL);
-        
-        if ($stmt->execute()) {
-            // Return the new ID
-            return $stmt->fetchColumn();
-        }
-        
-        return false;
-    }
-    
-    /**
-     * Aggiorna le impostazioni SMTP
-     *
-     * @param array $data Dati delle impostazioni SMTP
-     * @return bool
-     */
-    public function update($data) {
-        $sql = "UPDATE {$this->table} SET 
-                host = :host, 
-                port = :port, 
-                username = :username, 
-                password = :password, 
-                sender_name = :sender_name, 
-                sender_email = :sender_email, 
-                encryption = :encryption, 
-                active = :active, 
-                updated_at = NOW() 
-                WHERE tenant_id = :tenant_id";
-        
-        $stmt = $this->db->prepare($sql);
-        
-        $stmt->bindParam(':tenant_id', $data['tenant_id'], PDO::PARAM_INT);
-        $stmt->bindParam(':host', $data['host'], PDO::PARAM_STR);
-        $stmt->bindParam(':port', $data['port'], PDO::PARAM_INT);
-        $stmt->bindParam(':username', $data['username'], PDO::PARAM_STR);
-        $stmt->bindParam(':password', $data['password'], PDO::PARAM_STR);
-        $stmt->bindParam(':sender_name', $data['sender_name'], PDO::PARAM_STR);
-        $stmt->bindParam(':sender_email', $data['sender_email'], PDO::PARAM_STR);
-        $stmt->bindParam(':encryption', $data['encryption'], PDO::PARAM_STR);
-        $stmt->bindParam(':active', $data['active'], PDO::PARAM_BOOL);
-        
-        return $stmt->execute();
-    }
-    
-    /**
-     * Verifica se le impostazioni SMTP sono corrette
-     *
-     * @param array $data Dati delle impostazioni SMTP
-     * @return array Risultato della verifica [success: bool, message: string]
-     */
-    public function testConnection($data) {
+    public function getByTenant($tenant_id) {
         try {
-            // Creiamo una nuova istanza di PHPMailer
-            $mail = new PHPMailer\PHPMailer\PHPMailer(true);
-            $mail->isSMTP();
-            $mail->Host = $data['host'];
-            $mail->SMTPAuth = true;
-            $mail->Username = $data['username'];
-            $mail->Password = $data['password'];
-            $mail->Port = $data['port'];
+            // Prepara la query
+            $query = "SELECT * FROM {$this->table} WHERE tenant_id = :tenant_id";
             
-            // Impostazioni di sicurezza
-            switch ($data['encryption']) {
-                case 'tls':
-                    $mail->SMTPSecure = PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
-                    break;
-                case 'ssl':
-                    $mail->SMTPSecure = PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_SMTPS;
-                    break;
-                default:
-                    $mail->SMTPSecure = '';
-                    $mail->SMTPAutoTLS = false;
+            // Prepara lo statement
+            $stmt = $this->db->prepare($query);
+            
+            // Bind dei parametri
+            $stmt->bindParam(':tenant_id', $tenant_id, PDO::PARAM_INT);
+            
+            // Esegui la query
+            $stmt->execute();
+            
+            // Ottieni il risultato
+            return $stmt->fetch(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            // Log dell'errore
+            error_log("Errore nel recupero delle impostazioni SMTP: " . $e->getMessage());
+            return false;
+        }
+    }
+    
+    /**
+     * Salva o aggiorna le impostazioni SMTP per un tenant
+     *
+     * @param int $tenant_id ID del tenant
+     * @param array $data Dati delle impostazioni SMTP
+     * @return bool True se l'operazione è riuscita, altrimenti false
+     */
+    public function saveOrUpdate($tenant_id, $data) {
+        try {
+            // Verifica se esistono già impostazioni per questo tenant
+            $existingSettings = $this->getByTenant($tenant_id);
+            
+            if ($existingSettings) {
+                // Aggiorna le impostazioni esistenti
+                $query = "UPDATE {$this->table} SET 
+                          smtp_host = :host,
+                          smtp_port = :port,
+                          smtp_username = :username,
+                          smtp_password = :password,
+                          smtp_encryption = :encryption,
+                          smtp_from_email = :from_email,
+                          smtp_from_name = :from_name
+                          WHERE tenant_id = :tenant_id";
+            } else {
+                // Inserisci nuove impostazioni
+                $query = "INSERT INTO {$this->table} 
+                          (tenant_id, smtp_host, smtp_port, smtp_username, smtp_password, 
+                           smtp_encryption, smtp_from_email, smtp_from_name) 
+                          VALUES 
+                          (:tenant_id, :host, :port, :username, :password, 
+                           :encryption, :from_email, :from_name)";
             }
             
-            // Imposta il timeout
-            $mail->Timeout = 10;
+            // Prepara lo statement
+            $stmt = $this->db->prepare($query);
             
-            // Proviamo a connetterci al server SMTP per verificare le credenziali
-            // Cattura l'output di debug
-            ob_start();
-            $mail->SMTPDebug = 2; // Modalità di debug dettagliata
+            // Bind dei parametri
+            $stmt->bindParam(':tenant_id', $tenant_id, PDO::PARAM_INT);
+            $stmt->bindParam(':host', $data['smtp_host']);
+            $stmt->bindParam(':port', $data['smtp_port'], PDO::PARAM_INT);
+            $stmt->bindParam(':username', $data['smtp_username']);
+            $stmt->bindParam(':password', $data['smtp_password']);
+            $stmt->bindParam(':encryption', $data['smtp_encryption']);
+            $stmt->bindParam(':from_email', $data['smtp_from_email']);
+            $stmt->bindParam(':from_name', $data['smtp_from_name']);
             
-            // Imposta mittente e destinatario (necessari per eseguire il comando MAIL FROM)
-            $mail->setFrom($data['sender_email'], $data['sender_name']);
-            $mail->addAddress($data['sender_email']); // Invia a sé stesso per il test
+            // Esegui la query
+            return $stmt->execute();
+        } catch (PDOException $e) {
+            // Log dell'errore
+            error_log("Errore nel salvataggio delle impostazioni SMTP: " . $e->getMessage());
+            return false;
+        }
+    }
+    
+    /**
+     * Verifica se le impostazioni SMTP sono configurate per un tenant
+     *
+     * @param int $tenant_id ID del tenant
+     * @return bool True se le impostazioni SMTP sono configurate, altrimenti false
+     */
+    public function isConfigured($tenant_id) {
+        $settings = $this->getByTenant($tenant_id);
+        
+        if (!$settings) {
+            return false;
+        }
+        
+        // Verifica che siano impostati i campi obbligatori
+        return !empty($settings['smtp_host']) && 
+               !empty($settings['smtp_port']) && 
+               !empty($settings['smtp_from_email']);
+    }
+    
+    /**
+     * Configura PHPMailer con le impostazioni SMTP di un tenant
+     *
+     * @param PHPMailer $mailer Istanza di PHPMailer
+     * @param int $tenant_id ID del tenant
+     * @return bool True se la configurazione è riuscita, altrimenti false
+     */
+    public function configurePHPMailer($mailer, $tenant_id) {
+        $settings = $this->getByTenant($tenant_id);
+        
+        if (!$settings || !$this->isConfigured($tenant_id)) {
+            return false;
+        }
+        
+        try {
+            // Configura il mailer con SMTP
+            $mailer->isSMTP();
+            $mailer->Host = $settings['smtp_host'];
+            $mailer->Port = $settings['smtp_port'];
             
-            // Testa la connessione senza inviare la mail
-            $mail->preSend();
-            $debug = ob_get_clean();
+            // Autenticazione SMTP se sono forniti username e password
+            if (!empty($settings['smtp_username'])) {
+                $mailer->SMTPAuth = true;
+                $mailer->Username = $settings['smtp_username'];
+                $mailer->Password = $settings['smtp_password'];
+            } else {
+                $mailer->SMTPAuth = false;
+            }
             
-            return ['success' => true, 'message' => 'Connessione SMTP riuscita.'];
+            // Crittografia SMTP
+            if (!empty($settings['smtp_encryption'])) {
+                $mailer->SMTPSecure = $settings['smtp_encryption'];
+            }
+            
+            // Imposta mittente
+            $mailer->setFrom(
+                $settings['smtp_from_email'], 
+                !empty($settings['smtp_from_name']) ? $settings['smtp_from_name'] : ''
+            );
+            
+            return true;
         } catch (Exception $e) {
-            $debug = ob_get_clean();
-            return ['success' => false, 'message' => 'Errore: ' . $e->getMessage()];
+            error_log("Errore nella configurazione di PHPMailer: " . $e->getMessage());
+            return false;
         }
     }
 }

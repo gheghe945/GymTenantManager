@@ -1,98 +1,136 @@
 <?php
 /**
- * Profilo Utente Model
+ * User Profile Model
  */
 class UserProfile extends BaseModel {
     /**
-     * The table name in the database
+     * Nome della tabella
      *
      * @var string
      */
     protected $table = 'user_profiles';
     
     /**
-     * Ottiene un profilo utente tramite ID utente
-     *
-     * @param int $userId ID dell'utente
-     * @return array|false
+     * Costruttore
      */
-    public function getByUserId($userId) {
-        $sql = "SELECT * FROM {$this->table} WHERE user_id = :user_id";
-        
-        $stmt = $this->db->prepare($sql);
-        $stmt->bindParam(':user_id', $userId, PDO::PARAM_INT);
-        $stmt->execute();
-        
-        return $stmt->fetch(PDO::FETCH_ASSOC);
+    public function __construct() {
+        parent::__construct();
     }
     
     /**
      * Crea un nuovo profilo utente
      *
-     * @param array $data Dati del profilo
-     * @return int|false L'ID del profilo creato, o false in caso di errore
+     * @param array $data Dati del profilo utente
+     * @return int|false ID del profilo creato o false in caso di errore
      */
     public function create($data) {
-        $sql = "INSERT INTO {$this->table} (user_id, lastname, phone, birthdate, tax_code, address, city, zip, province, weight, height, created_at, updated_at) 
-                VALUES (:user_id, :lastname, :phone, :birthdate, :tax_code, :address, :city, :zip, :province, :weight, :height, NOW(), NOW()) RETURNING id";
-        
-        $stmt = $this->db->prepare($sql);
-        
-        $stmt->bindParam(':user_id', $data['user_id'], PDO::PARAM_INT);
-        $stmt->bindParam(':lastname', $data['lastname'], PDO::PARAM_STR);
-        $stmt->bindParam(':phone', $data['phone'], PDO::PARAM_STR);
-        $stmt->bindParam(':birthdate', $data['birthdate'], PDO::PARAM_STR);
-        $stmt->bindParam(':tax_code', $data['tax_code'], PDO::PARAM_STR);
-        $stmt->bindParam(':address', $data['address'], PDO::PARAM_STR);
-        $stmt->bindParam(':city', $data['city'], PDO::PARAM_STR);
-        $stmt->bindParam(':zip', $data['zip'], PDO::PARAM_STR);
-        $stmt->bindParam(':province', $data['province'], PDO::PARAM_STR);
-        $stmt->bindParam(':weight', $data['weight'], PDO::PARAM_STR);
-        $stmt->bindParam(':height', $data['height'], PDO::PARAM_STR);
-        
-        if ($stmt->execute()) {
-            // Return the new ID
+        try {
+            // Prepara la query
+            $query = "INSERT INTO {$this->table} 
+                      (user_id, phone, birthdate, tax_code, address, city, province, zip, weight, height) 
+                      VALUES 
+                      (:user_id, :phone, :birthdate, :tax_code, :address, :city, :province, :zip, :weight, :height) 
+                      RETURNING id";
+            
+            // Prepara lo statement
+            $stmt = $this->db->prepare($query);
+            
+            // Bind dei parametri
+            $stmt->bindParam(':user_id', $data['user_id'], PDO::PARAM_INT);
+            $stmt->bindParam(':phone', $data['phone']);
+            $stmt->bindParam(':birthdate', $data['birthdate']);
+            $stmt->bindParam(':tax_code', $data['tax_code']);
+            $stmt->bindParam(':address', $data['address']);
+            $stmt->bindParam(':city', $data['city']);
+            $stmt->bindParam(':province', $data['province']);
+            $stmt->bindParam(':zip', $data['zip']);
+            $stmt->bindParam(':weight', $data['weight'], PDO::PARAM_STR);
+            $stmt->bindParam(':height', $data['height'], PDO::PARAM_STR);
+            
+            // Esegui la query
+            $stmt->execute();
+            
+            // Ottieni l'ID del profilo appena creato
             return $stmt->fetchColumn();
+        } catch (PDOException $e) {
+            // Log dell'errore
+            error_log("Errore nella creazione del profilo utente: " . $e->getMessage());
+            return false;
         }
-        
-        return false;
     }
     
     /**
-     * Aggiorna un profilo utente
+     * Ottiene il profilo di un utente per ID utente
      *
-     * @param array $data Dati del profilo
-     * @return bool
+     * @param int $user_id ID dell'utente
+     * @return array|false Dati del profilo o false se non trovato
      */
-    public function update($data) {
-        $sql = "UPDATE {$this->table} SET 
-                lastname = :lastname, 
-                phone = :phone, 
-                birthdate = :birthdate, 
-                tax_code = :tax_code, 
-                address = :address, 
-                city = :city, 
-                zip = :zip, 
-                province = :province, 
-                weight = :weight, 
-                height = :height, 
-                updated_at = NOW() 
-                WHERE user_id = :user_id";
-        
-        $stmt = $this->db->prepare($sql);
-        
-        $stmt->bindParam(':user_id', $data['user_id'], PDO::PARAM_INT);
-        $stmt->bindParam(':lastname', $data['lastname'], PDO::PARAM_STR);
-        $stmt->bindParam(':phone', $data['phone'], PDO::PARAM_STR);
-        $stmt->bindParam(':birthdate', $data['birthdate'], PDO::PARAM_STR);
-        $stmt->bindParam(':tax_code', $data['tax_code'], PDO::PARAM_STR);
-        $stmt->bindParam(':address', $data['address'], PDO::PARAM_STR);
-        $stmt->bindParam(':city', $data['city'], PDO::PARAM_STR);
-        $stmt->bindParam(':zip', $data['zip'], PDO::PARAM_STR);
-        $stmt->bindParam(':province', $data['province'], PDO::PARAM_STR);
-        $stmt->bindParam(':weight', $data['weight'], PDO::PARAM_STR);
-        $stmt->bindParam(':height', $data['height'], PDO::PARAM_STR);
-        
-        return $stmt->execute();
+    public function getByUserId($user_id) {
+        try {
+            // Prepara la query
+            $query = "SELECT * FROM {$this->table} WHERE user_id = :user_id";
+            
+            // Prepara lo statement
+            $stmt = $this->db->prepare($query);
+            
+            // Bind dei parametri
+            $stmt->bindParam(':user_id', $user_id, PDO::PARAM_INT);
+            
+            // Esegui la query
+            $stmt->execute();
+            
+            // Ottieni il risultato
+            return $stmt->fetch(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            // Log dell'errore
+            error_log("Errore nel recupero del profilo utente: " . $e->getMessage());
+            return false;
+        }
+    }
+    
+    /**
+     * Aggiorna il profilo di un utente
+     *
+     * @param int $user_id ID dell'utente
+     * @param array $data Dati del profilo da aggiornare
+     * @return bool True se l'aggiornamento è riuscito, altrimenti false
+     */
+    public function update($user_id, $data) {
+        try {
+            // Prepara la query
+            $query = "UPDATE {$this->table} SET 
+                      phone = :phone,
+                      birthdate = :birthdate,
+                      tax_code = :tax_code,
+                      address = :address,
+                      city = :city,
+                      province = :province,
+                      zip = :zip,
+                      weight = :weight,
+                      height = :height
+                      WHERE user_id = :user_id";
+            
+            // Prepara lo statement
+            $stmt = $this->db->prepare($query);
+            
+            // Bind dei parametri
+            $stmt->bindParam(':user_id', $user_id, PDO::PARAM_INT);
+            $stmt->bindParam(':phone', $data['phone']);
+            $stmt->bindParam(':birthdate', $data['birthdate']);
+            $stmt->bindParam(':tax_code', $data['tax_code']);
+            $stmt->bindParam(':address', $data['address']);
+            $stmt->bindParam(':city', $data['city']);
+            $stmt->bindParam(':province', $data['province']);
+            $stmt->bindParam(':zip', $data['zip']);
+            $stmt->bindParam(':weight', $data['weight'], PDO::PARAM_STR);
+            $stmt->bindParam(':height', $data['height'], PDO::PARAM_STR);
+            
+            // Esegui la query
+            return $stmt->execute();
+        } catch (PDOException $e) {
+            // Log dell'errore
+            error_log("Errore nell'aggiornamento del profilo utente: " . $e->getMessage());
+            return false;
+        }
     }
 }

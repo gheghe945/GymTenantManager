@@ -50,11 +50,14 @@ class InviteController extends BaseController {
         $this->userModel = new User();
         $this->profileModel = new UserProfile();
         
-        // Aggiungi middleware per verificare se l'utente è GYM_ADMIN
-        $this->middleware = [
-            'auth' => ['*'],
-            'gymAdmin' => ['index', 'create', 'send']
-        ];
+        // Verifica che l'utente sia autenticato e sia GYM_ADMIN per determinate azioni
+        $restricted_methods = ['index', 'send'];
+        
+        $current_method = $_GET['method'] ?? 'index';
+        
+        if (in_array($current_method, $restricted_methods) && (!isLoggedIn() || !hasRole('GYM_ADMIN'))) {
+            redirect('dashboard');
+        }
     }
     
     /**
@@ -63,23 +66,23 @@ class InviteController extends BaseController {
      * @return void
      */
     public function index() {
-        // Verifica che l'utente sia autenticato e sia GYM_ADMIN
-        if (!isLoggedIn() || !hasRole('GYM_ADMIN')) {
-            redirect('dashboard');
-        }
+        // Ottieni il tenant_id dalla sessione
+        $tenant_id = $_SESSION['tenant_id'];
         
-        // Ottieni gli inviti per il tenant corrente
-        $invites = $this->inviteModel->getByTenantId(getCurrentTenantId());
+        // Verifica se SMTP è configurato
+        $smtpConfigured = $this->smtpModel->isConfigured($tenant_id);
         
-        // Verifica se le impostazioni SMTP sono configurate
-        $smtpSettings = $this->smtpModel->getByTenantId(getCurrentTenantId());
-        $smtpConfigured = !empty($smtpSettings) && $smtpSettings['active'];
+        // Ottieni tutti gli inviti per il tenant
+        $invites = $this->inviteModel->getAllByTenant($tenant_id);
         
-        // Renderizza la view
-        $this->render('invites/index', [
+        // Imposta i dati per la vista
+        $data = [
             'invites' => $invites,
             'smtpConfigured' => $smtpConfigured
-        ]);
+        ];
+        
+        // Renderizza la vista
+        $this->render('invites/index', $data);
     }
     
     /**
@@ -88,145 +91,115 @@ class InviteController extends BaseController {
      * @return void
      */
     public function send() {
-        // Verifica che l'utente sia autenticato e sia GYM_ADMIN
-        if (!isLoggedIn() || !hasRole('GYM_ADMIN')) {
-            redirect('dashboard');
-        }
-        
-        // Verifica il metodo di richiesta
+        // Verifica che sia una richiesta POST
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             redirect('invites');
         }
         
-        // Processa i dati del form
-        $email = trim($_POST['email']);
-        $tenantId = getCurrentTenantId();
+        // Ottieni il tenant_id dalla sessione
+        $tenant_id = $_SESSION['tenant_id'];
         
-        // Valida l'email
+        // Ottieni l'email dal form
+        $email = trim($_POST['email']);
+        
+        // Validazione
         if (empty($email)) {
             flash('invite_message', 'Inserisci un indirizzo email valido', 'alert alert-danger');
             redirect('invites');
         }
         
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            flash('invite_message', 'Formato email non valido', 'alert alert-danger');
+            flash('invite_message', 'Inserisci un indirizzo email valido', 'alert alert-danger');
             redirect('invites');
         }
         
-        // Verifica se l'email è già presente nel sistema per questo tenant
-        $existingUser = $this->userModel->findUserByEmail($email);
-        if ($existingUser && $existingUser['tenant_id'] == $tenantId) {
-            flash('invite_message', 'Questo utente è già registrato per questa palestra', 'alert alert-danger');
+        // Verifica se l'utente esiste già
+        if ($this->userModel->findUserByEmail($email, $tenant_id)) {
+            flash('invite_message', 'Questo indirizzo email è già registrato', 'alert alert-danger');
             redirect('invites');
         }
-        
-        // Verifica se l'email è già stata invitata
-        if ($this->inviteModel->isEmailInvited($email, $tenantId)) {
-            flash('invite_message', 'È già stato inviato un invito a questo indirizzo email', 'alert alert-danger');
-            redirect('invites');
-        }
-        
-        // Genera un token univoco
-        $token = $this->inviteModel->generateToken();
-        
-        // Calcola la data di scadenza (48 ore)
-        $expiresAt = (new DateTime())->add(new DateInterval('PT48H'))->format('Y-m-d H:i:s');
         
         // Crea l'invito
-        $inviteData = [
-            'token' => $token,
-            'tenant_id' => $tenantId,
-            'email' => $email,
-            'expires_at' => $expiresAt
-        ];
+        $invite = $this->inviteModel->create($email, $tenant_id);
         
-        // Salva l'invito nel database
-        $inviteId = $this->inviteModel->create($inviteData);
-        
-        if (!$inviteId) {
-            flash('invite_message', 'Errore durante la creazione dell\'invito', 'alert alert-danger');
+        if (!$invite) {
+            flash('invite_message', 'Impossibile creare l\'invito. Riprova.', 'alert alert-danger');
             redirect('invites');
         }
         
-        // Ottieni le impostazioni SMTP
-        $smtpSettings = $this->smtpModel->getByTenantId($tenantId);
+        // Verifica se SMTP è configurato per inviare l'email
+        $smtpConfigured = $this->smtpModel->isConfigured($tenant_id);
         
-        if (empty($smtpSettings) || !$smtpSettings['active']) {
-            flash('invite_message', 'Le impostazioni SMTP non sono configurate. L\'invito è stato creato ma non è stato inviato via email.', 'alert alert-warning');
-            redirect('invites');
+        // Se SMTP è configurato, invia l'email
+        if ($smtpConfigured) {
+            $this->sendInviteEmail($invite, $tenant_id);
         }
         
-        // Genera il link di registrazione
-        $registerLink = URLROOT . '/register/' . $token;
-        
-        // Invia l'email
-        if ($this->sendInviteEmail($email, $registerLink, $smtpSettings)) {
-            flash('invite_message', 'Invito inviato con successo a ' . $email);
-        } else {
-            flash('invite_message', 'L\'invito è stato creato ma si è verificato un errore durante l\'invio dell\'email', 'alert alert-warning');
-        }
-        
+        // Messaggio di successo
+        flash('invite_message', 'Invito creato con successo!', 'alert alert-success');
         redirect('invites');
     }
     
     /**
-     * Register Form - Mostra il form di registrazione
+     * Register - Mostra il modulo di registrazione per un invito
      *
-     * @param string $token Token di invito
+     * @param string $token Token dell'invito
      * @return void
      */
     public function register($token) {
-        // Verifica se il token è valido
-        if (!$this->inviteModel->isValidToken($token)) {
-            // Token non valido o scaduto
+        // Ottieni l'invito tramite token
+        $invite = $this->inviteModel->getByToken($token);
+        
+        // Verifica se l'invito è valido
+        if (!$invite || !$this->inviteModel->isValid($invite)) {
+            // Renderizza la vista dell'errore
             $this->render('invites/invalid_token');
             return;
         }
         
-        // Ottieni i dati dell'invito
-        $invite = $this->inviteModel->getByToken($token);
-        
-        // Prepara i dati per la view
+        // Imposta i dati per la vista
         $data = [
             'token' => $token,
             'email' => $invite['email'],
             'tenant_name' => $invite['tenant_name'],
-            'errors' => []
+            'tenant_id' => $invite['tenant_id'],
+            'errors' => $_SESSION['errors'] ?? []
         ];
         
-        // Renderizza la view
+        // Pulisci le variabili di sessione
+        unset($_SESSION['errors']);
+        
+        // Renderizza la vista
         $this->render('invites/register', $data);
     }
     
     /**
-     * Process Registration - Elabora la registrazione
+     * Process - Elabora la registrazione
      *
-     * @param string $token Token di invito
+     * @param string $token Token dell'invito
      * @return void
      */
     public function process($token) {
-        // Verifica il metodo di richiesta
+        // Verifica che sia una richiesta POST
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             redirect('register/' . $token);
         }
         
-        // Verifica se il token è valido
-        if (!$this->inviteModel->isValidToken($token)) {
-            // Token non valido o scaduto
+        // Ottieni l'invito tramite token
+        $invite = $this->inviteModel->getByToken($token);
+        
+        // Verifica se l'invito è valido
+        if (!$invite || !$this->inviteModel->isValid($invite)) {
+            // Renderizza la vista dell'errore
             $this->render('invites/invalid_token');
             return;
         }
         
-        // Ottieni i dati dell'invito
-        $invite = $this->inviteModel->getByToken($token);
-        
-        // Processa i dati del form
+        // Ottieni i dati dal form
         $data = [
-            'token' => $token,
-            'email' => $invite['email'],
-            'tenant_name' => $invite['tenant_name'],
             'name' => trim($_POST['name']),
             'lastname' => trim($_POST['lastname']),
+            'email' => trim($_POST['email']),
             'password' => trim($_POST['password']),
             'confirm_password' => trim($_POST['confirm_password']),
             'phone' => trim($_POST['phone']),
@@ -234,222 +207,152 @@ class InviteController extends BaseController {
             'tax_code' => trim($_POST['tax_code']),
             'address' => trim($_POST['address']),
             'city' => trim($_POST['city']),
-            'zip' => trim($_POST['zip']),
             'province' => trim($_POST['province']),
+            'zip' => trim($_POST['zip']),
             'weight' => trim($_POST['weight']),
-            'height' => trim($_POST['height']),
-            'errors' => []
+            'height' => trim($_POST['height'])
         ];
         
-        // Valida i dati
-        if (empty($data['name'])) {
-            $data['errors']['name'] = 'Il campo Nome è obbligatorio';
+        // Validazione dei dati
+        $errors = [];
+        
+        // Validazione dei campi obbligatori
+        $required_fields = ['name', 'lastname', 'email', 'password', 'confirm_password', 'phone',
+                           'birthdate', 'tax_code', 'address', 'city', 'province', 'zip', 'weight', 'height'];
+        
+        foreach ($required_fields as $field) {
+            if (empty($data[$field])) {
+                $errors[$field] = 'Questo campo è obbligatorio';
+            }
         }
         
-        if (empty($data['lastname'])) {
-            $data['errors']['lastname'] = 'Il campo Cognome è obbligatorio';
+        // Verifica che l'email corrisponda a quella dell'invito
+        if ($data['email'] !== $invite['email']) {
+            $errors['email'] = 'L\'indirizzo email non corrisponde a quello dell\'invito';
         }
         
-        if (empty($data['password'])) {
-            $data['errors']['password'] = 'Il campo Password è obbligatorio';
-        } elseif (strlen($data['password']) < 6) {
-            $data['errors']['password'] = 'La password deve essere di almeno 6 caratteri';
+        // Verifica la password
+        if (strlen($data['password']) < 6) {
+            $errors['password'] = 'La password deve contenere almeno 6 caratteri';
         }
         
+        // Verifica che le password corrispondano
         if ($data['password'] !== $data['confirm_password']) {
-            $data['errors']['confirm_password'] = 'Le password non corrispondono';
+            $errors['confirm_password'] = 'Le password non corrispondono';
         }
         
-        if (empty($data['phone'])) {
-            $data['errors']['phone'] = 'Il campo Telefono è obbligatorio';
+        // Se ci sono errori, torna alla vista con gli errori
+        if (!empty($errors)) {
+            $_SESSION['errors'] = $errors;
+            redirect('register/' . $token);
         }
         
-        if (empty($data['birthdate'])) {
-            $data['errors']['birthdate'] = 'Il campo Data di nascita è obbligatorio';
-        }
-        
-        if (empty($data['tax_code'])) {
-            $data['errors']['tax_code'] = 'Il campo Codice fiscale è obbligatorio';
-        }
-        
-        if (empty($data['address'])) {
-            $data['errors']['address'] = 'Il campo Indirizzo è obbligatorio';
-        }
-        
-        if (empty($data['city'])) {
-            $data['errors']['city'] = 'Il campo Città è obbligatorio';
-        }
-        
-        if (empty($data['zip'])) {
-            $data['errors']['zip'] = 'Il campo CAP è obbligatorio';
-        }
-        
-        if (empty($data['province'])) {
-            $data['errors']['province'] = 'Il campo Provincia è obbligatorio';
-        }
-        
-        if (empty($data['weight'])) {
-            $data['errors']['weight'] = 'Il campo Peso è obbligatorio';
-        } elseif (!is_numeric($data['weight']) || $data['weight'] <= 0) {
-            $data['errors']['weight'] = 'Inserisci un valore numerico valido per il peso';
-        }
-        
-        if (empty($data['height'])) {
-            $data['errors']['height'] = 'Il campo Altezza è obbligatorio';
-        } elseif (!is_numeric($data['height']) || $data['height'] <= 0) {
-            $data['errors']['height'] = 'Inserisci un valore numerico valido per l\'altezza';
-        }
-        
-        // Se ci sono errori, mostra il form con gli errori
-        if (!empty($data['errors'])) {
-            $this->render('invites/register', $data);
-            return;
-        }
-        
-        // Salva l'utente nel database
-        $userData = [
-            'tenant_id' => $invite['tenant_id'],
+        // Crea il nuovo utente
+        $user_id = $this->userModel->register([
             'name' => $data['name'],
+            'lastname' => $data['lastname'],
             'email' => $data['email'],
-            'password' => password_hash($data['password'], PASSWORD_DEFAULT),
-            'role' => 'MEMBER'
+            'password' => $data['password'],
+            'role' => 'MEMBER',
+            'tenant_id' => $invite['tenant_id']
+        ]);
+        
+        if (!$user_id) {
+            $errors['general'] = 'Impossibile registrare l\'utente. Riprova.';
+            $_SESSION['errors'] = $errors;
+            redirect('register/' . $token);
+        }
+        
+        // Crea il profilo utente
+        $profile_data = [
+            'user_id' => $user_id,
+            'phone' => $data['phone'],
+            'birthdate' => $data['birthdate'],
+            'tax_code' => $data['tax_code'],
+            'address' => $data['address'],
+            'city' => $data['city'],
+            'province' => $data['province'],
+            'zip' => $data['zip'],
+            'weight' => $data['weight'],
+            'height' => $data['height']
         ];
         
-        // Inizia una transazione
-        $this->db->beginTransaction();
+        $profile_id = $this->profileModel->create($profile_data);
         
-        try {
-            // Crea l'utente
-            $userId = $this->userModel->create($userData);
+        if (!$profile_id) {
+            // In caso di errore nella creazione del profilo, elimina l'utente
+            $this->userModel->delete($user_id);
             
-            if (!$userId) {
-                throw new Exception('Errore durante la creazione dell\'utente');
-            }
-            
-            // Crea il profilo utente
-            $profileData = [
-                'user_id' => $userId,
-                'lastname' => $data['lastname'],
-                'phone' => $data['phone'],
-                'birthdate' => $data['birthdate'],
-                'tax_code' => $data['tax_code'],
-                'address' => $data['address'],
-                'city' => $data['city'],
-                'zip' => $data['zip'],
-                'province' => $data['province'],
-                'weight' => $data['weight'],
-                'height' => $data['height']
-            ];
-            
-            $profileId = $this->profileModel->create($profileData);
-            
-            if (!$profileId) {
-                throw new Exception('Errore durante la creazione del profilo utente');
-            }
-            
-            // Segna l'invito come utilizzato
-            if (!$this->inviteModel->markAsUsed($token)) {
-                throw new Exception('Errore durante l\'aggiornamento dello stato dell\'invito');
-            }
-            
-            // Commit della transazione
-            $this->db->commit();
-            
-            // Mostra un messaggio di successo
-            flash('login_message', 'Registrazione completata con successo. Ora puoi effettuare il login.');
-            redirect('login');
-        } catch (Exception $e) {
-            // Rollback della transazione in caso di errore
-            $this->db->rollBack();
-            
-            $data['errors']['general'] = 'Si è verificato un errore durante la registrazione: ' . $e->getMessage();
-            $this->render('invites/register', $data);
+            $errors['general'] = 'Impossibile creare il profilo utente. Riprova.';
+            $_SESSION['errors'] = $errors;
+            redirect('register/' . $token);
         }
+        
+        // Aggiorna lo stato dell'invito a 'used'
+        $this->inviteModel->updateStatus($invite['id'], 'used');
+        
+        // Messaggio di successo
+        flash('login_message', 'Registrazione completata con successo! Ora puoi accedere con le tue credenziali.', 'alert alert-success');
+        redirect('login');
     }
     
     /**
      * Invia l'email di invito
      *
-     * @param string $email Email del destinatario
-     * @param string $registerLink Link di registrazione
-     * @param array $smtpSettings Impostazioni SMTP
-     * @return bool
+     * @param array $invite Dati dell'invito
+     * @param int $tenant_id ID del tenant
+     * @return bool True se l'invio è riuscito, altrimenti false
      */
-    private function sendInviteEmail($email, $registerLink, $smtpSettings) {
+    private function sendInviteEmail($invite, $tenant_id) {
         try {
-            // Carica l'autoloader di Composer
-            require_once 'vendor/autoload.php';
-            
             // Crea una nuova istanza di PHPMailer
             $mail = new PHPMailer(true);
             
-            // Impostazioni del server
-            $mail->isSMTP();
-            $mail->Host = $smtpSettings['host'];
-            $mail->SMTPAuth = true;
-            $mail->Username = $smtpSettings['username'];
-            $mail->Password = $smtpSettings['password'];
-            $mail->Port = $smtpSettings['port'];
-            
-            // Impostazioni di sicurezza
-            switch ($smtpSettings['encryption']) {
-                case 'tls':
-                    $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-                    break;
-                case 'ssl':
-                    $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
-                    break;
-                default:
-                    $mail->SMTPSecure = '';
-                    $mail->SMTPAutoTLS = false;
+            // Configura PHPMailer con le impostazioni SMTP
+            if (!$this->smtpModel->configurePHPMailer($mail, $tenant_id)) {
+                return false;
             }
             
-            // Impostazioni del mittente e del destinatario
-            $mail->setFrom($smtpSettings['sender_email'], $smtpSettings['sender_name']);
-            $mail->addAddress($email);
+            // Ottieni il nome del tenant
+            $tenant = $this->db->query("SELECT name FROM tenants WHERE id = " . $tenant_id)->fetch(PDO::FETCH_ASSOC);
+            $tenant_name = $tenant ? $tenant['name'] : 'Gestione Palestre';
             
-            // Contenuto dell'email
+            // Imposta il destinatario
+            $mail->addAddress($invite['email']);
+            
+            // Imposta l'oggetto e il corpo del messaggio
+            $mail->Subject = 'Invito a registrarsi su ' . $tenant_name;
+            
+            // URL di registrazione
+            $register_url = URLROOT . '/register/' . $invite['token'];
+            
+            // Corpo HTML
             $mail->isHTML(true);
-            $mail->Subject = 'Invito a registrarsi nella nostra palestra';
+            $mail->Body = "
+                <h2>Invito a registrarsi su {$tenant_name}</h2>
+                <p>Sei stato invitato a registrarti su {$tenant_name}.</p>
+                <p>Per completare la registrazione, clicca sul seguente link:</p>
+                <p><a href='{$register_url}'>{$register_url}</a></p>
+                <p>Questo link scadrà tra 48 ore.</p>
+                <p>Se non hai richiesto questo invito, puoi ignorare questa email.</p>
+            ";
             
-            // Corpo dell'email
-            $mail->Body = '
-                <html>
-                <head>
-                    <style>
-                        body { font-family: Arial, sans-serif; line-height: 1.6; }
-                        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-                        .button { display: inline-block; padding: 10px 20px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 5px; }
-                    </style>
-                </head>
-                <body>
-                    <div class="container">
-                        <h2>Sei stato invitato a registrarti nella nostra palestra</h2>
-                        <p>Ciao,</p>
-                        <p>Sei stato invitato a registrarti come membro nella nostra palestra. Per completare la registrazione, clicca sul pulsante qui sotto.</p>
-                        <p><a class="button" href="' . $registerLink . '">Completa la registrazione</a></p>
-                        <p>Oppure copia e incolla il seguente link nel tuo browser:</p>
-                        <p>' . $registerLink . '</p>
-                        <p>Questo link scadrà tra 48 ore.</p>
-                        <p>Cordiali saluti,<br>Il team della palestra</p>
-                    </div>
-                </body>
-                </html>
-            ';
-            
-            // Versione alternativa in testo semplice
-            $mail->AltBody = "Sei stato invitato a registrarti nella nostra palestra.\n\n";
-            $mail->AltBody .= "Per completare la registrazione, visita il seguente link:\n";
-            $mail->AltBody .= $registerLink . "\n\n";
-            $mail->AltBody .= "Questo link scadrà tra 48 ore.\n\n";
-            $mail->AltBody .= "Cordiali saluti,\nIl team della palestra";
+            // Corpo alternativo in testo
+            $mail->AltBody = "
+                Invito a registrarsi su {$tenant_name}
+                
+                Sei stato invitato a registrarti su {$tenant_name}.
+                Per completare la registrazione, visita il seguente link:
+                {$register_url}
+                
+                Questo link scadrà tra 48 ore.
+                Se non hai richiesto questo invito, puoi ignorare questa email.
+            ";
             
             // Invia l'email
-            $mail->send();
-            
-            return true;
+            return $mail->send();
         } catch (Exception $e) {
-            error_log('Errore nell\'invio dell\'email: ' . $e->getMessage());
+            error_log("Errore nell'invio dell'email di invito: " . $e->getMessage());
             return false;
         }
     }

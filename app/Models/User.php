@@ -283,4 +283,24 @@ class User extends BaseModel {
         
         return $stmt->execute();
     }
+    
+    /**
+     * Register a new user (hash password and create user)
+     *
+     * @param array $data User data (name, lastname, email, password, role, tenant_id)
+     * @return int|false The ID of the newly created user, or false on failure
+     */
+    public function register($data) {
+        // Hash password
+        $data['password'] = password_hash($data['password'], PASSWORD_DEFAULT);
+        
+        // Combine name and lastname
+        if (isset($data['lastname'])) {
+            $data['name'] = $data['name'] . ' ' . $data['lastname'];
+            unset($data['lastname']);
+        }
+        
+        // Create user
+        return $this->create($data);
+    }
 }
