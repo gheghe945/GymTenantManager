@@ -105,25 +105,31 @@
             <li>
                 <a href="<?= URLROOT ?>/">
                     <i class="fas fa-tachometer-alt"></i>
-                    <span><?= __('Dashboard') ?></span>
+                    <span><?= __('Pannello di Controllo') ?></span>
                 </a>
             </li>
             <li>
                 <a href="<?= URLROOT ?>/tenants">
                     <i class="fas fa-building"></i>
-                    <span><?= __('Gyms') ?></span>
+                    <span><?= __('Palestre') ?></span>
                 </a>
             </li>
             <li>
                 <a href="<?= URLROOT ?>/users">
                     <i class="fas fa-users"></i>
-                    <span><?= __('Users') ?></span>
+                    <span><?= __('Utenti') ?></span>
                 </a>
             </li>
             <li>
                 <a href="<?= URLROOT ?>/reports">
                     <i class="fas fa-chart-bar"></i>
-                    <span><?= __('Reports') ?></span>
+                    <span><?= __('Report') ?></span>
+                </a>
+            </li>
+            <li>
+                <a href="<?= URLROOT ?>/global-smtp">
+                    <i class="fas fa-envelope"></i>
+                    <span><?= __('SMTP') ?></span>
                 </a>
             </li>
             
