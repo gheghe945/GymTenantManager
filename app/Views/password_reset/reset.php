@@ -14,7 +14,7 @@
                         Inserisci una nuova password per il tuo account.
                     </p>
                     
-                    <form action="<?= URLROOT ?>/password/reset" method="post">
+                    <form action="<?= URLROOT ?>/password/do-reset" method="post">
                         <input type="hidden" name="token" value="<?= $token ?>">
                         <input type="hidden" name="email" value="<?= $email ?>">
                         

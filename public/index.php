@@ -103,7 +103,7 @@ $router->register('invites/sendEmail/([a-zA-Z0-9]+)', 'InviteController@sendEmai
 $router->register('password/reset', 'PasswordResetController@index');
 $router->register('password/request', 'PasswordResetController@request');
 $router->register('password/reset/confirm/([a-zA-Z0-9]+)', 'PasswordResetController@confirm');
-$router->register('password/reset', 'PasswordResetController@reset');
+$router->register('password/do-reset', 'PasswordResetController@reset');
 
 // Tenant routes (Super Admin only)
 $router->register('tenants', 'TenantController@index');

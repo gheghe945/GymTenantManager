@@ -28,8 +28,20 @@ class Router {
      * @return void
      */
     public function dispatch($uri) {
+        // Pagine pubbliche che non richiedono autenticazione
+        $publicPages = ['login', '', 'register', 'password/reset', 'password/request', 'password/reset/confirm'];
+        
+        // Verifica se l'URI inizia con una delle pagine pubbliche
+        $isPublicPage = false;
+        foreach ($publicPages as $page) {
+            if ($page === $uri || (strpos($uri, $page . '/') === 0)) {
+                $isPublicPage = true;
+                break;
+            }
+        }
+        
         // Check if user is not logged in and trying to access protected page
-        if (!isLoggedIn() && $uri !== 'login' && $uri !== '') {
+        if (!isLoggedIn() && !$isPublicPage) {
             redirect('login');
         }
         
