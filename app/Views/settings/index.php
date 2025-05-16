@@ -101,7 +101,7 @@
                             <div class="form-group mb-3">
                                 <label for="smtp_from_name">Nome mittente</label>
                                 <input type="text" name="smtp_from_name" id="smtp_from_name" class="form-control" 
-                                       value="<?= isset($smtp_settings['smtp_from_name']) ? $smtp_settings['smtp_from_name'] : (isset($_SESSION['form_data']['smtp_from_name']) ? $_SESSION['form_data']['smtp_from_name'] : '') ?>">
+                                       value="<?= isset($smtp_settings['sender_name']) ? $smtp_settings['sender_name'] : (isset($_SESSION['form_data']['smtp_from_name']) ? $_SESSION['form_data']['smtp_from_name'] : '') ?>">
                                 <small class="form-text text-muted">Nome visualizzato come mittente</small>
                             </div>
                         </div>

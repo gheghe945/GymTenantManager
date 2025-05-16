@@ -63,9 +63,20 @@ class GymSettingsController extends BaseController
             
             // Gestione upload logo
             if (isset($_FILES['logo']) && $_FILES['logo']['error'] === UPLOAD_ERR_OK) {
-                $newLogoPath = $this->gymSettingModel->uploadLogo($_FILES['logo'], $tenantId);
-                if ($newLogoPath) {
-                    $logoPath = $newLogoPath;
+                // Verifica dimensione file (max 2MB)
+                if ($_FILES['logo']['size'] > 2 * 1024 * 1024) {
+                    $errors['logo'] = __('Il file è troppo grande. Dimensione massima: 2MB');
+                } else {
+                    $newLogoPath = $this->gymSettingModel->uploadLogo($_FILES['logo'], $tenantId);
+                    if ($newLogoPath) {
+                        // Se esisteva già un logo, elimina il vecchio file
+                        if (!empty($logoPath) && file_exists($_SERVER['DOCUMENT_ROOT'] . $logoPath) && $logoPath != $newLogoPath) {
+                            @unlink($_SERVER['DOCUMENT_ROOT'] . $logoPath);
+                        }
+                        $logoPath = $newLogoPath;
+                    } else {
+                        $errors['logo'] = __('Errore nel caricamento del logo. Assicurati che sia un\'immagine valida.');
+                    }
                 }
             }
             

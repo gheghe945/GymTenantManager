@@ -161,8 +161,14 @@
                     </li>
                     <li>
                         <a href="<?= URLROOT ?>/settings">
+                            <i class="fas fa-envelope-open-text"></i>
+                            <span><?= __('SMTP') ?></span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="<?= URLROOT ?>/gym-settings">
                             <i class="fas fa-cog"></i>
-                            <span><?= __('Impostazioni') ?></span>
+                            <span><?= __('Impostazioni Palestra') ?></span>
                         </a>
                     </li>
                 </ul>
