@@ -5,6 +5,8 @@ require_once APP_ROOT . '/vendor/autoload.php';
 // Importa la classe PHPMailer
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
+use Endroid\QrCode\QrCode;
+use Endroid\QrCode\Writer\PngWriter;
 
 /**
  * Invite Controller
@@ -99,8 +101,13 @@ class InviteController extends BaseController {
         // Ottieni il tenant_id dalla sessione
         $tenant_id = $_SESSION['tenant_id'];
         
-        // Ottieni l'email dal form
-        $email = trim($_POST['email']);
+        // Ottieni dati dal form
+        $email = trim($_POST['email'] ?? '');
+        $sendEmail = isset($_POST['send_email']) ? true : false;
+        $name = trim($_POST['name'] ?? '');
+        $lastname = trim($_POST['lastname'] ?? '');
+        $role = trim($_POST['role'] ?? 'MEMBER');
+        $manualRegistration = isset($_POST['manual_registration']) ? true : false;
         
         // Validazione
         if (empty($email)) {
@@ -130,17 +137,128 @@ class InviteController extends BaseController {
             redirect('invites');
         }
         
-        // Verifica se SMTP è configurato per inviare l'email
-        $smtpConfigured = $this->smtpModel->isConfigured($tenant_id);
+        // Se è un invito manuale, crea direttamente l'utente
+        if ($manualRegistration && !empty($name) && !empty($lastname)) {
+            // Genera una password casuale
+            $password = $this->generateRandomPassword();
+            
+            // Crea l'utente
+            $user_id = $this->userModel->register([
+                'name' => $name,
+                'lastname' => $lastname,
+                'email' => $email,
+                'password' => $password,
+                'role' => $role,
+                'tenant_id' => $tenant_id
+            ]);
+            
+            if ($user_id) {
+                // Crea un profilo base
+                $profile_data = [
+                    'user_id' => $user_id,
+                    'phone' => '',
+                    'birthdate' => null,
+                    'tax_code' => '',
+                    'address' => '',
+                    'city' => '',
+                    'province' => '',
+                    'zip' => '',
+                    'weight' => 0,
+                    'height' => 0
+                ];
+                
+                $profile_id = $this->profileModel->create($profile_data);
+                
+                // Aggiorna lo stato dell'invito a 'used'
+                $this->inviteModel->updateStatus($invite['id'], 'used');
+                
+                // Genera il QR code per il link di invito
+                $this->generateQrCode($invite['token']);
+                
+                // Se richiesto, invia email con credenziali
+                if ($sendEmail) {
+                    $smtpConfigured = $this->smtpModel->isConfigured($tenant_id);
+                    if ($smtpConfigured) {
+                        $this->sendCredentialsEmail($email, $password, $tenant_id);
+                    }
+                }
+                
+                // Reindirizza alla pagina di riepilogo
+                flash('invite_message', 'Utente creato con successo!', 'alert alert-success');
+                redirect('invites/details/' . $invite['token']);
+                return;
+            } else {
+                flash('invite_message', 'Impossibile creare l\'utente. Riprova.', 'alert alert-danger');
+                redirect('invites');
+                return;
+            }
+        }
         
-        // Se SMTP è configurato, invia l'email
-        if ($smtpConfigured) {
-            $this->sendInviteEmail($invite, $tenant_id);
+        // Genera il QR code per il link di invito
+        $this->generateQrCode($invite['token']);
+        
+        // Se richiesto, invia email di invito
+        if ($sendEmail) {
+            // Verifica se SMTP è configurato per inviare l'email
+            $smtpConfigured = $this->smtpModel->isConfigured($tenant_id);
+            
+            // Se SMTP è configurato, invia l'email
+            if ($smtpConfigured) {
+                $this->sendInviteEmail($invite, $tenant_id);
+            }
         }
         
         // Messaggio di successo
         flash('invite_message', 'Invito creato con successo!', 'alert alert-success');
-        redirect('invites');
+        
+        // Reindirizza alla pagina di riepilogo
+        redirect('invites/details/' . $invite['token']);
+    }
+    
+    /**
+     * Details - Mostra i dettagli dell'invito
+     *
+     * @param string $token Token dell'invito
+     * @return void
+     */
+    public function details($token) {
+        // Verifica che l'utente sia autenticato e sia GYM_ADMIN
+        if (!isLoggedIn() || !hasRole('GYM_ADMIN')) {
+            redirect('dashboard');
+        }
+        
+        // Ottieni l'invito tramite token
+        $invite = $this->inviteModel->getByToken($token);
+        
+        // Verifica se l'invito esiste
+        if (!$invite) {
+            flash('invite_message', 'Invito non trovato', 'alert alert-danger');
+            redirect('invites');
+        }
+        
+        // Verifica che l'invito appartenga al tenant corrente
+        if ($invite['tenant_id'] != $_SESSION['tenant_id']) {
+            flash('invite_message', 'Non hai i permessi per visualizzare questo invito', 'alert alert-danger');
+            redirect('invites');
+        }
+        
+        // Costruisci l'URL completo dell'invito
+        $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || $_SERVER['SERVER_PORT'] == 443) ? "https://" : "http://";
+        $domainName = $_SERVER['HTTP_HOST'];
+        $inviteUrl = $protocol . $domainName . URLROOT . '/register/' . $token;
+        
+        // Percorso del QR code
+        $qrCodePath = '/uploads/qrcodes/' . $token . '.png';
+        
+        // Imposta i dati per la vista
+        $data = [
+            'invite' => $invite,
+            'inviteUrl' => $inviteUrl,
+            'qrCodePath' => $qrCodePath
+        ];
+        
+        // Renderizza la vista
+        $this->render('invites/details', $data);
     }
     
     /**
@@ -331,8 +449,10 @@ class InviteController extends BaseController {
             // Imposta l'oggetto e il corpo del messaggio
             $mail->Subject = 'Invito a registrarsi su ' . $tenant_name;
             
-            // URL di registrazione
-            $register_url = URLROOT . '/register/' . $invite['token'];
+            // Costruisci l'URL completo di registrazione
+            $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || $_SERVER['SERVER_PORT'] == 443) ? "https://" : "http://";
+            $domainName = $_SERVER['HTTP_HOST'];
+            $register_url = $protocol . $domainName . URLROOT . '/register/' . $invite['token'];
             
             // Corpo HTML
             $mail->isHTML(true);
@@ -366,6 +486,138 @@ class InviteController extends BaseController {
             }
         } catch (Exception $e) {
             error_log("Errore nell'invio dell'email di invito: " . $e->getMessage());
+            return false;
+        }
+    }
+    
+    /**
+     * Invia l'email con le credenziali dell'utente
+     *
+     * @param string $email Indirizzo email dell'utente
+     * @param string $password Password generata
+     * @param int $tenant_id ID del tenant
+     * @return bool True se l'invio è riuscito, altrimenti false
+     */
+    private function sendCredentialsEmail($email, $password, $tenant_id) {
+        try {
+            // Crea una nuova istanza di PHPMailer
+            $mail = new \PHPMailer\PHPMailer\PHPMailer(true);
+            
+            // Configura PHPMailer con le impostazioni SMTP
+            if (!$this->smtpModel->configurePHPMailer($mail, $tenant_id)) {
+                return false;
+            }
+            
+            // Ottieni il nome del tenant
+            $tenant = $this->db->query("SELECT name FROM tenants WHERE id = " . $tenant_id)->fetch(PDO::FETCH_ASSOC);
+            $tenant_name = $tenant ? $tenant['name'] : 'Gestione Palestre';
+            
+            // Imposta il destinatario
+            $mail->addAddress($email);
+            
+            // Imposta l'oggetto e il corpo del messaggio
+            $mail->Subject = 'Le tue credenziali di accesso a ' . $tenant_name;
+            
+            // URL di login
+            $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || $_SERVER['SERVER_PORT'] == 443) ? "https://" : "http://";
+            $domainName = $_SERVER['HTTP_HOST'];
+            $login_url = $protocol . $domainName . URLROOT . '/login';
+            
+            // Corpo HTML
+            $mail->isHTML(true);
+            $mail->Body = "
+                <h2>Le tue credenziali di accesso a {$tenant_name}</h2>
+                <p>È stato creato un account per te su {$tenant_name}.</p>
+                <p><strong>Email:</strong> {$email}</p>
+                <p><strong>Password:</strong> {$password}</p>
+                <p>Per accedere, visita il seguente link:</p>
+                <p><a href='{$login_url}'>{$login_url}</a></p>
+                <p>Ti consigliamo di cambiare la password al primo accesso.</p>
+            ";
+            
+            // Corpo alternativo in testo
+            $mail->AltBody = "
+                Le tue credenziali di accesso a {$tenant_name}
+                
+                È stato creato un account per te su {$tenant_name}.
+                
+                Email: {$email}
+                Password: {$password}
+                
+                Per accedere, visita il seguente link:
+                {$login_url}
+                
+                Ti consigliamo di cambiare la password al primo accesso.
+            ";
+            
+            // Invia l'email
+            if ($mail->send()) {
+                return true;
+            } else {
+                error_log("Errore nell'invio dell'email con le credenziali: " . $mail->ErrorInfo);
+                return false;
+            }
+        } catch (Exception $e) {
+            error_log("Errore nell'invio dell'email con le credenziali: " . $e->getMessage());
+            return false;
+        }
+    }
+    
+    /**
+     * Genera una password casuale
+     *
+     * @param int $length Lunghezza della password
+     * @return string Password generata
+     */
+    private function generateRandomPassword($length = 10) {
+        $chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()-_=+;:,.?';
+        $password = '';
+        
+        $maxIndex = strlen($chars) - 1;
+        for ($i = 0; $i < $length; $i++) {
+            $password .= $chars[random_int(0, $maxIndex)];
+        }
+        
+        return $password;
+    }
+    
+    /**
+     * Genera un QR code per il link di invito
+     *
+     * @param string $token Token dell'invito
+     * @return bool True se la generazione è riuscita, altrimenti false
+     */
+    private function generateQrCode($token) {
+        try {
+            // Costruisci l'URL completo dell'invito
+            $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || $_SERVER['SERVER_PORT'] == 443) ? "https://" : "http://";
+            $domainName = $_SERVER['HTTP_HOST'];
+            $registerUrl = $protocol . $domainName . URLROOT . '/register/' . $token;
+            
+            // Directory per i QR code
+            $qrCodeDir = $_SERVER['DOCUMENT_ROOT'] . '/uploads/qrcodes';
+            
+            // Crea la directory se non esiste
+            if (!is_dir($qrCodeDir)) {
+                mkdir($qrCodeDir, 0755, true);
+            }
+            
+            // Percorso del file QR code
+            $qrCodePath = $qrCodeDir . '/' . $token . '.png';
+            
+            // Crea il QR code
+            $qrCode = new QrCode($registerUrl);
+            $qrCode->setSize(300);
+            $qrCode->setMargin(10);
+            
+            // Scrivi il QR code su file
+            $writer = new PngWriter();
+            $result = $writer->write($qrCode);
+            file_put_contents($qrCodePath, $result->getString());
+            
+            return true;
+        } catch (Exception $e) {
+            error_log("Errore nella generazione del QR code: " . $e->getMessage());
             return false;
         }
     }
