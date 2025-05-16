@@ -41,6 +41,7 @@ require_once APP_ROOT . '/app/Controllers/TenantController.php';
 require_once APP_ROOT . '/app/Controllers/CalendarController.php';
 require_once APP_ROOT . '/app/Controllers/SettingController.php';
 require_once APP_ROOT . '/app/Controllers/InviteController.php';
+require_once APP_ROOT . '/app/Controllers/GymSettingsController.php';
 
 // Load models
 require_once APP_ROOT . '/app/Models/BaseModel.php';
@@ -53,6 +54,7 @@ require_once APP_ROOT . '/app/Models/Payment.php';
 require_once APP_ROOT . '/app/Models/Invite.php';
 require_once APP_ROOT . '/app/Models/SmtpSetting.php';
 require_once APP_ROOT . '/app/Models/UserProfile.php';
+require_once APP_ROOT . '/app/Models/GymSetting.php';
 
 // Load middleware
 require_once APP_ROOT . '/app/Middleware/MiddlewareInterface.php';

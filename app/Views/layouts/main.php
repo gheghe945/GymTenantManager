@@ -25,8 +25,11 @@
                 // Carica le impostazioni della palestra se l'utente è loggato
                 $gymSettings = null;
                 if (isLoggedIn() && isset($_SESSION['tenant_id'])) {
-                    $gymSettingModel = new GymSetting();
-                    $gymSettings = GymSetting::getByTenantId($_SESSION['tenant_id']);
+                    // Verifica se il modello GymSetting esiste
+                    if (class_exists('GymSetting')) {
+                        $gymSettingModel = new GymSetting();
+                        $gymSettings = GymSetting::getByTenantId($_SESSION['tenant_id']);
+                    }
                 }
                 ?>
                 
@@ -57,7 +60,7 @@
                             <?php 
                             // Recupera la foto profilo dell'utente
                             $userProfilePhoto = '/assets/images/default-profile.png'; // Immagine predefinita
-                            if (isset($_SESSION['user_id'])) {
+                            if (isset($_SESSION['user_id']) && class_exists('UserProfile')) {
                                 $userProfileModel = new UserProfile();
                                 $userProfile = $userProfileModel->getByUserId($_SESSION['user_id']);
                                 if ($userProfile && !empty($userProfile['profile_photo'])) {
@@ -273,8 +276,11 @@
             // Carica le impostazioni della palestra se l'utente è loggato
             $gymSettings = null;
             if (isLoggedIn() && isset($_SESSION['tenant_id'])) {
-                $gymSettingModel = new GymSetting();
-                $gymSettings = GymSetting::getByTenantId($_SESSION['tenant_id']);
+                // Verifica se il modello GymSetting esiste
+                if (class_exists('GymSetting')) {
+                    $gymSettingModel = new GymSetting();
+                    $gymSettings = GymSetting::getByTenantId($_SESSION['tenant_id']);
+                }
             }
             ?>
             
