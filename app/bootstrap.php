@@ -43,6 +43,7 @@ require_once APP_ROOT . '/app/Controllers/SettingController.php';
 require_once APP_ROOT . '/app/Controllers/InviteController.php';
 require_once APP_ROOT . '/app/Controllers/GymSettingsController.php';
 require_once APP_ROOT . '/app/Controllers/PasswordResetController.php';
+require_once APP_ROOT . '/app/Controllers/GlobalSmtpController.php';
 
 // Load models
 require_once APP_ROOT . '/app/Models/BaseModel.php';
@@ -57,6 +58,7 @@ require_once APP_ROOT . '/app/Models/SmtpSetting.php';
 require_once APP_ROOT . '/app/Models/UserProfile.php';
 require_once APP_ROOT . '/app/Models/GymSetting.php';
 require_once APP_ROOT . '/app/Models/PasswordReset.php';
+require_once APP_ROOT . '/app/Models/GlobalSmtpSetting.php';
 
 // Load middleware
 require_once APP_ROOT . '/app/Middleware/MiddlewareInterface.php';

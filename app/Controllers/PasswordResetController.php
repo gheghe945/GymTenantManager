@@ -62,15 +62,11 @@ class PasswordResetController extends BaseController {
             return;
         }
         
-        // Identifica il tenant dalla richiesta
-        // Per semplicità, usiamo il tenant_id = 1 se non possiamo identificarlo
-        $tenant_id = $_SESSION['tenant_id'] ?? 1;
+        // Identifica il tenant dell'utente
+        $tenant_id = $this->findUserTenant($email);
         
-        // Verifica se l'utente esiste
-        $user = $this->userModel->findUserByEmail($email, $tenant_id);
-        
-        // Non rivelare se l'email esiste o meno (per sicurezza)
-        if (!$user) {
+        if (!$tenant_id) {
+            // Per sicurezza, non rivelare se l'email esiste o meno
             flash('password_reset_message', 'Se l\'indirizzo email esiste nel sistema, riceverai istruzioni per reimpostare la password.', 'alert alert-info');
             redirect('password/reset');
             return;
@@ -80,33 +76,78 @@ class PasswordResetController extends BaseController {
         $resetToken = $this->resetModel->createToken($email, $tenant_id);
         
         if (!$resetToken) {
-            flash('password_reset_message', 'Si è verificato un errore. Riprova più tardi.', 'alert alert-danger');
+            error_log('Errore nel creare il token per l\'utente: ' . $email . ' (tenant_id: ' . $tenant_id . ')');
+            flash('password_reset_message', 'Si è verificato un errore tecnico. I nostri amministratori sono stati informati.', 'alert alert-danger');
             redirect('password/reset');
             return;
         }
         
-        // Verifica se SMTP è configurato
+        // Verifica se SMTP è configurato per il tenant dell'utente
         $smtpConfigured = $this->smtpModel->isConfigured($tenant_id);
         
-        // Se SMTP è configurato, invia l'email
+        // Se SMTP è configurato per il tenant, invia l'email
         if ($smtpConfigured) {
             $emailSent = $this->sendResetEmail($resetToken, $tenant_id);
             
             if (!$emailSent) {
-                flash('password_reset_message', 'Si è verificato un errore nell\'invio dell\'email. Riprova più tardi.', 'alert alert-danger');
+                error_log('Errore nell\'invio dell\'email di reset per ' . $email . ' (tenant_id: ' . $tenant_id . ')');
+                flash('password_reset_message', 'Si è verificato un errore nell\'invio dell\'email. Controlla con l\'amministratore la configurazione SMTP.', 'alert alert-danger');
                 redirect('password/reset');
                 return;
             }
         } else {
-            // Se SMTP non è configurato, mostra un link diretto
-            flash('password_reset_message', 'Email di reset non inviata (SMTP non configurato). Usa questo link per reimpostare la password: <a href="' . URLROOT . '/password/reset/confirm/' . $resetToken['token'] . '">' . URLROOT . '/password/reset/confirm/' . $resetToken['token'] . '</a>', 'alert alert-warning');
-            redirect('password/reset');
-            return;
+            // Verifica se esiste una configurazione SMTP globale (SUPER_ADMIN)
+            $globalSmtpConfigured = $this->smtpModel->isConfigured(1); // Assumiamo che 1 sia il tenant del SUPER_ADMIN
+            
+            if ($globalSmtpConfigured) {
+                // Prova ad inviare usando la configurazione SMTP globale
+                $emailSent = $this->sendResetEmail($resetToken, 1);
+                
+                if (!$emailSent) {
+                    error_log('Errore nell\'invio dell\'email di reset usando SMTP globale per ' . $email);
+                    flash('password_reset_message', 'Si è verificato un errore nell\'invio dell\'email. Contatta l\'amministratore di sistema.', 'alert alert-danger');
+                    redirect('password/reset');
+                    return;
+                }
+            } else {
+                // Se nessuna configurazione SMTP è disponibile, mostra un link diretto (solo in ambiente di sviluppo)
+                error_log('Nessuna configurazione SMTP disponibile per ' . $email . ' (tenant_id: ' . $tenant_id . ')');
+                flash('password_reset_message', 'Il sistema di email non è configurato correttamente. È stato creato un link di recupero temporaneo: <a href="' . URLROOT . '/password/reset/confirm/' . $resetToken['token'] . '">' . URLROOT . '/password/reset/confirm/' . $resetToken['token'] . '</a>', 'alert alert-warning');
+                redirect('password/reset');
+                return;
+            }
         }
         
         // Messaggio di successo
         flash('password_reset_message', 'Abbiamo inviato un\'email con le istruzioni per reimpostare la password. Controlla la tua casella di posta.', 'alert alert-success');
         redirect('password/reset');
+    }
+    
+    /**
+     * Identifica il tenant_id associato all'utente con una determinata email
+     *
+     * @param string $email Email dell'utente
+     * @return int|bool ID del tenant o false se l'utente non esiste
+     */
+    private function findUserTenant($email) {
+        try {
+            // Query per trovare il tenant_id dell'utente
+            $sql = "SELECT tenant_id FROM users WHERE email = :email LIMIT 1";
+            $stmt = $this->db->prepare($sql);
+            $stmt->bindParam(':email', $email, PDO::PARAM_STR);
+            $stmt->execute();
+            
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if ($result && isset($result['tenant_id'])) {
+                return $result['tenant_id'];
+            }
+            
+            return false;
+        } catch (Exception $e) {
+            error_log('Errore nel trovare il tenant per l\'utente ' . $email . ': ' . $e->getMessage());
+            return false;
+        }
     }
     
     /**

@@ -113,5 +113,10 @@ $router->register('tenants/edit/([0-9]+)', 'TenantController@edit');
 $router->register('tenants/update/([0-9]+)', 'TenantController@update');
 $router->register('tenants/delete/([0-9]+)', 'TenantController@delete');
 
+// Global SMTP routes (Super Admin only)
+$router->register('global-smtp', 'GlobalSmtpController@index');
+$router->register('global-smtp/save', 'GlobalSmtpController@save');
+$router->register('global-smtp/test', 'GlobalSmtpController@test');
+
 // Process the request
 $router->dispatch($uri);
