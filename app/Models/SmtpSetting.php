@@ -90,8 +90,8 @@ class SmtpSetting extends BaseModel {
             $stmt->bindParam(':username', $data['smtp_username']);
             $stmt->bindParam(':password', $data['smtp_password']);
             $stmt->bindParam(':encryption', $data['smtp_encryption']);
-            $stmt->bindParam(':from_email', $data['smtp_from_email']);
-            $stmt->bindParam(':from_name', $data['smtp_from_name']);
+            $stmt->bindParam(':sender_email', $data['smtp_from_email']);
+            $stmt->bindParam(':sender_name', $data['smtp_from_name']);
             
             // Esegui la query
             return $stmt->execute();

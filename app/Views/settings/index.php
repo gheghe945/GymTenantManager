@@ -32,7 +32,7 @@
                             <div class="form-group mb-3">
                                 <label for="smtp_host">Host SMTP <sup>*</sup></label>
                                 <input type="text" name="smtp_host" id="smtp_host" class="form-control <?= isset($errors['smtp_host']) ? 'is-invalid' : '' ?>" 
-                                       value="<?= isset($smtp_settings['smtp_host']) ? $smtp_settings['smtp_host'] : (isset($_SESSION['form_data']['smtp_host']) ? $_SESSION['form_data']['smtp_host'] : '') ?>">
+                                       value="<?= isset($smtp_settings['host']) ? $smtp_settings['host'] : (isset($_SESSION['form_data']['smtp_host']) ? $_SESSION['form_data']['smtp_host'] : '') ?>">
                                 <?php if (isset($errors['smtp_host'])): ?>
                                     <div class="invalid-feedback"><?= $errors['smtp_host'] ?></div>
                                 <?php endif; ?>
@@ -43,7 +43,7 @@
                             <div class="form-group mb-3">
                                 <label for="smtp_port">Porta SMTP <sup>*</sup></label>
                                 <input type="number" name="smtp_port" id="smtp_port" class="form-control <?= isset($errors['smtp_port']) ? 'is-invalid' : '' ?>" 
-                                       value="<?= isset($smtp_settings['smtp_port']) ? $smtp_settings['smtp_port'] : (isset($_SESSION['form_data']['smtp_port']) ? $_SESSION['form_data']['smtp_port'] : '587') ?>">
+                                       value="<?= isset($smtp_settings['port']) ? $smtp_settings['port'] : (isset($_SESSION['form_data']['smtp_port']) ? $_SESSION['form_data']['smtp_port'] : '587') ?>">
                                 <?php if (isset($errors['smtp_port'])): ?>
                                     <div class="invalid-feedback"><?= $errors['smtp_port'] ?></div>
                                 <?php endif; ?>
@@ -57,7 +57,7 @@
                             <div class="form-group mb-3">
                                 <label for="smtp_username">Nome utente SMTP</label>
                                 <input type="text" name="smtp_username" id="smtp_username" class="form-control" 
-                                       value="<?= isset($smtp_settings['smtp_username']) ? $smtp_settings['smtp_username'] : (isset($_SESSION['form_data']['smtp_username']) ? $_SESSION['form_data']['smtp_username'] : '') ?>">
+                                       value="<?= isset($smtp_settings['username']) ? $smtp_settings['username'] : (isset($_SESSION['form_data']['smtp_username']) ? $_SESSION['form_data']['smtp_username'] : '') ?>">
                                 <small class="form-text text-muted">Solitamente il tuo indirizzo email completo</small>
                             </div>
                         </div>
@@ -65,7 +65,7 @@
                             <div class="form-group mb-3">
                                 <label for="smtp_password">Password SMTP</label>
                                 <input type="password" name="smtp_password" id="smtp_password" class="form-control" 
-                                       value="<?= isset($smtp_settings['smtp_password']) ? $smtp_settings['smtp_password'] : (isset($_SESSION['form_data']['smtp_password']) ? $_SESSION['form_data']['smtp_password'] : '') ?>">
+                                       value="<?= isset($smtp_settings['password']) ? $smtp_settings['password'] : (isset($_SESSION['form_data']['smtp_password']) ? $_SESSION['form_data']['smtp_password'] : '') ?>">
                                 <small class="form-text text-muted">Password dell'account email o password dell'app</small>
                             </div>
                         </div>
@@ -76,9 +76,9 @@
                             <div class="form-group mb-3">
                                 <label for="smtp_encryption">Crittografia</label>
                                 <select name="smtp_encryption" id="smtp_encryption" class="form-control">
-                                    <option value="" <?= (!isset($smtp_settings['smtp_encryption']) || $smtp_settings['smtp_encryption'] === '') ? 'selected' : '' ?>>Nessuna</option>
-                                    <option value="ssl" <?= (isset($smtp_settings['smtp_encryption']) && $smtp_settings['smtp_encryption'] === 'ssl') ? 'selected' : '' ?>>SSL</option>
-                                    <option value="tls" <?= (isset($smtp_settings['smtp_encryption']) && $smtp_settings['smtp_encryption'] === 'tls') ? 'selected' : '' ?>>TLS</option>
+                                    <option value="" <?= (!isset($smtp_settings['encryption']) || $smtp_settings['encryption'] === '') ? 'selected' : '' ?>>Nessuna</option>
+                                    <option value="ssl" <?= (isset($smtp_settings['encryption']) && $smtp_settings['encryption'] === 'ssl') ? 'selected' : '' ?>>SSL</option>
+                                    <option value="tls" <?= (isset($smtp_settings['encryption']) && $smtp_settings['encryption'] === 'tls') ? 'selected' : '' ?>>TLS</option>
                                 </select>
                                 <small class="form-text text-muted">Seleziona il tipo di crittografia richiesto dal tuo server SMTP</small>
                             </div>
@@ -90,7 +90,7 @@
                             <div class="form-group mb-3">
                                 <label for="smtp_from_email">Email mittente <sup>*</sup></label>
                                 <input type="email" name="smtp_from_email" id="smtp_from_email" class="form-control <?= isset($errors['smtp_from_email']) ? 'is-invalid' : '' ?>" 
-                                       value="<?= isset($smtp_settings['smtp_from_email']) ? $smtp_settings['smtp_from_email'] : (isset($_SESSION['form_data']['smtp_from_email']) ? $_SESSION['form_data']['smtp_from_email'] : '') ?>">
+                                       value="<?= isset($smtp_settings['sender_email']) ? $smtp_settings['sender_email'] : (isset($_SESSION['form_data']['smtp_from_email']) ? $_SESSION['form_data']['smtp_from_email'] : '') ?>">
                                 <?php if (isset($errors['smtp_from_email'])): ?>
                                     <div class="invalid-feedback"><?= $errors['smtp_from_email'] ?></div>
                                 <?php endif; ?>
