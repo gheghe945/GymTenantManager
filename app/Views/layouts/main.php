@@ -95,7 +95,9 @@
             </li>
             
             <?php elseif (hasRole('GYM_ADMIN')): ?>
-            <!-- Menu per GYM_ADMIN come da immagine fornita -->
+            <!-- Menu per GYM_ADMIN riorganizzato secondo le specifiche -->
+            
+            <!-- Sezione 1: Club -->
             <li>
                 <a href="#" class="has-submenu">
                     <i class="fas fa-building"></i>
@@ -104,71 +106,47 @@
                 </a>
                 <ul class="submenu">
                     <li>
+                        <a href="<?= URLROOT ?>/">
+                            <i class="fas fa-th-large"></i>
+                            <span><?= __('Pannello di Controllo') ?></span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="<?= URLROOT ?>/payments">
+                            <i class="far fa-credit-card"></i>
+                            <span><?= __('Crediti') ?></span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="<?= URLROOT ?>/memberships">
+                            <i class="far fa-clipboard"></i>
+                            <span><?= __('Abbonamenti') ?></span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="<?= URLROOT ?>/payments/history">
+                            <i class="fas fa-chart-line"></i>
+                            <span><?= __('Movimenti') ?></span>
+                        </a>
+                    </li>
+                    <li>
                         <a href="<?= URLROOT ?>/settings">
                             <i class="fas fa-cog"></i>
                             <span><?= __('Impostazioni') ?></span>
                         </a>
                     </li>
-                    <li>
-                        <a href="<?= URLROOT ?>/invites">
-                            <i class="fas fa-user-plus"></i>
-                            <span><?= __('Invita Utente') ?></span>
-                        </a>
-                    </li>
                 </ul>
             </li>
             
+            <!-- Sezione 2: Attività -->
             <li>
-                <a href="<?= URLROOT ?>/">
-                    <i class="fas fa-th-large"></i>
-                    <span><?= __('Dashboard') ?></span>
+                <a href="<?= URLROOT ?>/courses/calendar">
+                    <i class="far fa-calendar"></i>
+                    <span><?= __('Calendario') ?></span>
                 </a>
             </li>
             
-            <li>
-                <a href="<?= URLROOT ?>/payments">
-                    <i class="far fa-credit-card"></i>
-                    <span><?= __('Crediti') ?></span>
-                </a>
-            </li>
-            
-            <li>
-                <a href="<?= URLROOT ?>/memberships">
-                    <i class="far fa-clipboard"></i>
-                    <span><?= __('Abbonamenti') ?></span>
-                </a>
-            </li>
-            
-            <li>
-                <a href="<?= URLROOT ?>/payments/history">
-                    <i class="fas fa-chart-line"></i>
-                    <span><?= __('Movimenti') ?></span>
-                </a>
-            </li>
-            
-            <li>
-                <a href="<?= URLROOT ?>/settings">
-                    <i class="fas fa-cog"></i>
-                    <span><?= __('Impostazioni') ?></span>
-                </a>
-            </li>
-            
-            <li>
-                <a href="#" class="has-submenu">
-                    <i class="fas fa-heartbeat"></i>
-                    <span><?= __('Attività') ?></span>
-                    <i class="fas fa-chevron-down submenu-icon"></i>
-                </a>
-                <ul class="submenu">
-                    <li>
-                        <a href="<?= URLROOT ?>/courses/calendar">
-                            <i class="far fa-calendar"></i>
-                            <span><?= __('Calendario') ?></span>
-                        </a>
-                    </li>
-                </ul>
-            </li>
-            
+            <!-- Sezione 3: Utenti -->
             <li>
                 <a href="#" class="has-submenu">
                     <i class="fas fa-users"></i>
@@ -191,6 +169,7 @@
                 </ul>
             </li>
             
+            <!-- Sezione 4: API -->
             <li>
                 <a href="<?= URLROOT ?>/api">
                     <i class="fas fa-code"></i>
