@@ -71,7 +71,7 @@
 
 <!-- Modal per l'invito -->
 <div class="modal fade" id="inviteModal" tabindex="-1" role="dialog" aria-labelledby="inviteModalLabel" aria-hidden="true">
-    <div class="modal-dialog" role="document">
+    <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
             <form action="<?= URLROOT ?>/invites/send" method="post">
                 <div class="modal-header">
@@ -81,15 +81,109 @@
                     </button>
                 </div>
                 <div class="modal-body">
-                    <div class="form-group">
-                        <label for="email">Email</label>
-                        <input type="email" name="email" id="email" class="form-control" required>
-                        <small class="form-text text-muted">Verrà inviato un invito a questo indirizzo email.</small>
+                    <ul class="nav nav-tabs" id="inviteTypeTabs" role="tablist">
+                        <li class="nav-item">
+                            <a class="nav-link active" id="emailInvite-tab" data-toggle="tab" href="#emailInvite" role="tab">
+                                <i class="fas fa-envelope"></i> Invito via Email
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="manualCreate-tab" data-toggle="tab" href="#manualCreate" role="tab">
+                                <i class="fas fa-user-plus"></i> Creazione Manuale
+                            </a>
+                        </li>
+                    </ul>
+                    
+                    <div class="tab-content mt-3" id="inviteTypeContent">
+                        <!-- Tab Invito via Email -->
+                        <div class="tab-pane fade show active" id="emailInvite" role="tabpanel">
+                            <div class="form-group">
+                                <label for="email">Email</label>
+                                <input type="email" name="email" id="email" class="form-control" required>
+                                <small class="form-text text-muted">Verrà generato un link di invito per questo indirizzo email.</small>
+                            </div>
+                            
+                            <div class="form-check mt-3">
+                                <input type="checkbox" name="send_email" id="send_email" class="form-check-input" checked>
+                                <label for="send_email" class="form-check-label">Invia link di registrazione via email</label>
+                                <small class="form-text text-muted">
+                                    <?php if ($smtpConfigured): ?>
+                                        L'utente riceverà un'email con un link per completare la registrazione.
+                                    <?php else: ?>
+                                        <span class="text-warning">
+                                            <i class="fas fa-exclamation-triangle"></i> 
+                                            Le impostazioni SMTP non sono configurate. L'email non potrà essere inviata.
+                                        </span>
+                                    <?php endif; ?>
+                                </small>
+                            </div>
+                        </div>
+                        
+                        <!-- Tab Creazione Manuale -->
+                        <div class="tab-pane fade" id="manualCreate" role="tabpanel">
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle"></i> 
+                                Crea un nuovo utente direttamente, senza che l'utente debba registrarsi.
+                                Verrà generata una password casuale.
+                            </div>
+                            
+                            <input type="hidden" name="manual_registration" value="1">
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="manual_email">Email</label>
+                                        <input type="email" name="email" id="manual_email" class="form-control" required>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="role">Ruolo</label>
+                                        <select name="role" id="role" class="form-control">
+                                            <option value="MEMBER">Membro</option>
+                                            <option value="GYM_ADMIN">Amministratore</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="name">Nome</label>
+                                        <input type="text" name="name" id="name" class="form-control" required>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="lastname">Cognome</label>
+                                        <input type="text" name="lastname" id="lastname" class="form-control" required>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="form-check mt-3">
+                                <input type="checkbox" name="send_email" id="send_credentials_email" class="form-check-input" checked>
+                                <label for="send_credentials_email" class="form-check-label">Invia credenziali via email</label>
+                                <small class="form-text text-muted">
+                                    <?php if ($smtpConfigured): ?>
+                                        L'utente riceverà un'email con le credenziali di accesso.
+                                    <?php else: ?>
+                                        <span class="text-warning">
+                                            <i class="fas fa-exclamation-triangle"></i> 
+                                            Le impostazioni SMTP non sono configurate. L'email non potrà essere inviata.
+                                        </span>
+                                    <?php endif; ?>
+                                </small>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Annulla</button>
-                    <button type="submit" class="btn btn-primary">Invia Invito</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-paper-plane"></i> <span id="submitBtnText">Invia Invito</span>
+                    </button>
                 </div>
             </form>
         </div>

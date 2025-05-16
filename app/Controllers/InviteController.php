@@ -613,7 +613,8 @@ class InviteController extends BaseController {
             // Scrivi il QR code su file
             $writer = new PngWriter();
             $result = $writer->write($qrCode);
-            file_put_contents($qrCodePath, $result->getString());
+            // Salva direttamente l'immagine del QR code
+            file_put_contents($qrCodePath, $result->getDataUri());
             
             return true;
         } catch (Exception $e) {
