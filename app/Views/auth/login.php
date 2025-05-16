@@ -31,6 +31,12 @@
             <div class="form-group">
                 <button type="submit" class="btn btn-primary w-100"><?= __('Login') ?></button>
             </div>
+            
+            <div class="text-center mt-3">
+                <a href="<?= URLROOT ?>/password/reset" class="text-decoration-none">
+                    <i class="fas fa-key"></i> <?= __('Password dimenticata?') ?>
+                </a>
+            </div>
         </form>
     </div>
 </div>

@@ -42,6 +42,7 @@ require_once APP_ROOT . '/app/Controllers/CalendarController.php';
 require_once APP_ROOT . '/app/Controllers/SettingController.php';
 require_once APP_ROOT . '/app/Controllers/InviteController.php';
 require_once APP_ROOT . '/app/Controllers/GymSettingsController.php';
+require_once APP_ROOT . '/app/Controllers/PasswordResetController.php';
 
 // Load models
 require_once APP_ROOT . '/app/Models/BaseModel.php';

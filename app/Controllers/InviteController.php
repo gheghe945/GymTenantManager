@@ -605,16 +605,19 @@ class InviteController extends BaseController {
             // Percorso del file QR code
             $qrCodePath = $qrCodeDir . '/' . $token . '.png';
             
-            // Crea il QR code
+            // Crea il QR code e salvalo direttamente come immagine
             $qrCode = new QrCode($registerUrl);
             $qrCode->setSize(300);
             $qrCode->setMargin(10);
             
-            // Scrivi il QR code su file
             $writer = new PngWriter();
             $result = $writer->write($qrCode);
-            // Salva direttamente l'immagine del QR code
-            file_put_contents($qrCodePath, $result->getDataUri());
+            
+            // Ottieni l'immagine come stringa binaria
+            $imageString = $result->getByteString();
+            
+            // Scrivi l'immagine su file
+            file_put_contents($qrCodePath, $imageString);
             
             return true;
         } catch (Exception $e) {

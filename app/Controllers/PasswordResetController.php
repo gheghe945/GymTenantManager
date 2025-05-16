@@ -16,9 +16,12 @@ class PasswordResetController extends BaseController {
      */
     public function __construct() {
         parent::__construct();
-        $this->userModel = $this->loadModel('User');
-        $this->resetModel = $this->loadModel('PasswordReset');
-        $this->smtpModel = $this->loadModel('SmtpSetting');
+        // Connessione al database
+        $this->db = Database::getInstance();
+        // Carica i modelli
+        $this->userModel = new User();
+        $this->resetModel = new PasswordReset();
+        $this->smtpModel = new SmtpSetting();
     }
     
     /**
@@ -60,7 +63,8 @@ class PasswordResetController extends BaseController {
         }
         
         // Identifica il tenant dalla richiesta
-        $tenant_id = getTenantIdFromRequest();
+        // Per semplicità, usiamo il tenant_id = 1 se non possiamo identificarlo
+        $tenant_id = $_SESSION['tenant_id'] ?? 1;
         
         // Verifica se l'utente esiste
         $user = $this->userModel->findUserByEmail($email, $tenant_id);
