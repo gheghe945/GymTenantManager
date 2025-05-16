@@ -5,6 +5,9 @@
 class GymSettingsController extends BaseController
 {
     protected $gymSettingModel;
+    protected $middleware = [
+        'auth' => ['*']
+    ];
     
     /**
      * Costruttore

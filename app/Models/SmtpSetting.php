@@ -66,8 +66,8 @@ class SmtpSetting extends BaseModel {
                           username = :username,
                           password = :password,
                           encryption = :encryption,
-                          sender_email = :from_email,
-                          sender_name = :from_name,
+                          sender_email = :sender_email,
+                          sender_name = :sender_name,
                           active = TRUE
                           WHERE tenant_id = :tenant_id";
             } else {
@@ -77,7 +77,7 @@ class SmtpSetting extends BaseModel {
                            encryption, sender_email, sender_name, active, created_at, updated_at) 
                           VALUES 
                           (:tenant_id, :host, :port, :username, :password, 
-                           :encryption, :from_email, :from_name, TRUE, NOW(), NOW())";
+                           :encryption, :sender_email, :sender_name, TRUE, NOW(), NOW())";
             }
             
             // Prepara lo statement

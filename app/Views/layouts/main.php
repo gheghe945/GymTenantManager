@@ -59,7 +59,7 @@
                             $userProfilePhoto = '/assets/images/default-profile.png'; // Immagine predefinita
                             if (isset($_SESSION['user_id'])) {
                                 $userProfileModel = new UserProfile();
-                                $userProfile = $userProfileModel->findWhere('user_id', $_SESSION['user_id']);
+                                $userProfile = $userProfileModel->getByUserId($_SESSION['user_id']);
                                 if ($userProfile && !empty($userProfile['profile_photo'])) {
                                     $userProfilePhoto = $userProfile['profile_photo'];
                                 }
