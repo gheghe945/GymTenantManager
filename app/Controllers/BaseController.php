@@ -104,4 +104,80 @@ class BaseController {
     protected function getMethod() {
         return strtolower($_SERVER['REQUEST_METHOD']);
     }
+    
+    /**
+     * Load a view file
+     *
+     * @param string $view View name
+     * @param array $data Data to pass to the view
+     * @return void
+     */
+    protected function view($view, $data = []) {
+        // Make the data available to the view
+        if (is_array($data)) {
+            extract($data);
+        }
+        
+        // Start output buffering
+        ob_start();
+        
+        // Include the view file
+        require_once APPROOT . '/Views/' . $view . '.php';
+        
+        // Get the buffered content
+        $content = ob_get_clean();
+        
+        // Output the content
+        echo $content;
+    }
+    
+    /**
+     * Redirect to specified location
+     *
+     * @param string $path Path to redirect to
+     * @return void
+     */
+    protected function redirect($path) {
+        header('Location: ' . URLROOT . $path);
+        exit;
+    }
+    
+    /**
+     * Set flash message
+     *
+     * @param string $type Message type (success, error, info)
+     * @param string $message The message text
+     * @return void
+     */
+    protected function setFlashMessage($type, $message) {
+        if (!isset($_SESSION['flash_messages'])) {
+            $_SESSION['flash_messages'] = [];
+        }
+        
+        $_SESSION['flash_messages'][$type] = $message;
+    }
+    
+    /**
+     * Set validation errors in session
+     *
+     * @param array $errors Array of errors
+     * @return void
+     */
+    protected function setValidationErrors($errors) {
+        $_SESSION['validation_errors'] = $errors;
+    }
+    
+    /**
+     * Get validation errors from session
+     *
+     * @return array
+     */
+    protected function getValidationErrors() {
+        $errors = $_SESSION['validation_errors'] ?? [];
+        
+        // Clear errors after retrieving
+        unset($_SESSION['validation_errors']);
+        
+        return $errors;
+    }
 }

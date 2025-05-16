@@ -91,6 +91,10 @@ $router->register('invites/send', 'InviteController@send');
 $router->register('register/([a-zA-Z0-9]+)', 'InviteController@register');
 $router->register('invites/process/([a-zA-Z0-9]+)', 'InviteController@process');
 
+// Gym Settings routes
+$router->register('gym-settings', 'GymSettingsController@index');
+$router->register('gym-settings/save', 'GymSettingsController@save');
+
 // Tenant routes (Super Admin only)
 $router->register('tenants', 'TenantController@index');
 $router->register('tenants/create', 'TenantController@create');

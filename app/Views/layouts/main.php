@@ -21,9 +21,25 @@
     <header>
         <div class="container">
             <div class="navbar">
+                <?php 
+                // Carica le impostazioni della palestra se l'utente è loggato
+                $gymSettings = null;
+                if (isLoggedIn() && isset($_SESSION['tenant_id'])) {
+                    $gymSettingModel = new GymSetting();
+                    $gymSettings = GymSetting::getByTenantId($_SESSION['tenant_id']);
+                }
+                ?>
+                
                 <div class="logo">
-                    <i class="fas fa-dumbbell"></i>
-                    <?php if (isset($_SESSION['tenant_id']) && isset($tenantName)): ?>
+                    <?php if ($gymSettings && !empty($gymSettings['logo_path'])): ?>
+                        <img src="<?= $gymSettings['logo_path'] ?>" alt="Logo" class="gym-logo">
+                    <?php else: ?>
+                        <i class="fas fa-dumbbell"></i>
+                    <?php endif; ?>
+                    
+                    <?php if ($gymSettings && !empty($gymSettings['gym_name'])): ?>
+                        <?= $gymSettings['gym_name'] ?>
+                    <?php elseif (isset($_SESSION['tenant_id']) && isset($tenantName)): ?>
                         <?= $tenantName ?>
                     <?php else: ?>
                         <?= __('GymManager') ?>
@@ -37,12 +53,26 @@
                 
                 <ul class="nav-links">
                     <li class="dropdown">
-                        <a href="#">
-                            <i class="fas fa-user"></i> 
-                            <?= $_SESSION['user_name'] ?? __('User') ?>
+                        <a href="#" class="user-profile-link">
+                            <?php 
+                            // Recupera la foto profilo dell'utente
+                            $userProfilePhoto = '/assets/images/default-profile.png'; // Immagine predefinita
+                            if (isset($_SESSION['user_id'])) {
+                                $userProfileModel = new UserProfile();
+                                $userProfile = $userProfileModel->findWhere('user_id', $_SESSION['user_id']);
+                                if ($userProfile && !empty($userProfile['profile_photo'])) {
+                                    $userProfilePhoto = $userProfile['profile_photo'];
+                                }
+                            }
+                            ?>
+                            <span class="profile-photo">
+                                <img src="<?= $userProfilePhoto ?>" alt="Profile" class="profile-image">
+                            </span>
+                            <span class="profile-name"><?= $_SESSION['user_name'] ?? __('User') ?></span>
                         </a>
                         <div class="dropdown-content">
-                            <a href="<?= URLROOT ?>/logout"><i class="fas fa-sign-out-alt"></i> <?= __('Logout') ?></a>
+                            <a href="<?= URLROOT ?>/profile"><i class="fas fa-user-cog"></i> <?= __('Profilo') ?></a>
+                            <a href="<?= URLROOT ?>/logout"><i class="fas fa-sign-out-alt"></i> <?= __('Esci') ?></a>
                         </div>
                     </li>
                 </ul>
@@ -229,6 +259,52 @@
             </div>
         </div>
     </div>
+    
+    <!-- Footer -->
+    <footer class="main-footer">
+        <div class="container">
+            <?php 
+            // Carica le impostazioni della palestra se l'utente è loggato
+            $gymSettings = null;
+            if (isLoggedIn() && isset($_SESSION['tenant_id'])) {
+                $gymSettingModel = new GymSetting();
+                $gymSettings = GymSetting::getByTenantId($_SESSION['tenant_id']);
+            }
+            ?>
+            
+            <div class="footer-content">
+                <?php if ($gymSettings): ?>
+                <div class="footer-info">
+                    <h3><?= $gymSettings['gym_name'] ?? __('GymManager') ?></h3>
+                    <ul>
+                        <?php if (!empty($gymSettings['address']) || !empty($gymSettings['city'])): ?>
+                        <li><i class="fas fa-map-marker-alt"></i> 
+                            <?= $gymSettings['address'] ?? '' ?><?= !empty($gymSettings['address']) && !empty($gymSettings['city']) ? ', ' : '' ?><?= $gymSettings['city'] ?? '' ?>
+                        </li>
+                        <?php endif; ?>
+                        
+                        <?php if (!empty($gymSettings['phone'])): ?>
+                        <li><i class="fas fa-phone"></i> <?= $gymSettings['phone'] ?></li>
+                        <?php endif; ?>
+                        
+                        <?php if (!empty($gymSettings['email'])): ?>
+                        <li><i class="fas fa-envelope"></i> <?= $gymSettings['email'] ?></li>
+                        <?php endif; ?>
+                    </ul>
+                </div>
+                <?php else: ?>
+                <div class="footer-info">
+                    <h3><?= __('GymManager') ?></h3>
+                    <p><?= __('Sistema di gestione palestre multi-tenant') ?></p>
+                </div>
+                <?php endif; ?>
+                
+                <div class="footer-copyright">
+                    <p>&copy; <?= date('Y') ?> <?= __('GymManager. Tutti i diritti riservati.') ?></p>
+                </div>
+            </div>
+        </div>
+    </footer>
     
     <!-- JavaScript -->
     <script src="<?= URLROOT ?>/assets/js/main.js"></script>
