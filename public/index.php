@@ -95,6 +95,16 @@ $router->register('invites/process/([a-zA-Z0-9]+)', 'InviteController@process');
 $router->register('gym-settings', 'GymSettingsController@index');
 $router->register('gym-settings/save', 'GymSettingsController@save');
 
+// Invite detail routes
+$router->register('invites/details/([a-zA-Z0-9]+)', 'InviteController@details');
+$router->register('invites/sendEmail/([a-zA-Z0-9]+)', 'InviteController@sendEmail');
+
+// Password Reset routes
+$router->register('password/reset', 'PasswordResetController@index');
+$router->register('password/request', 'PasswordResetController@request');
+$router->register('password/reset/confirm/([a-zA-Z0-9]+)', 'PasswordResetController@confirm');
+$router->register('password/reset', 'PasswordResetController@reset');
+
 // Tenant routes (Super Admin only)
 $router->register('tenants', 'TenantController@index');
 $router->register('tenants/create', 'TenantController@create');

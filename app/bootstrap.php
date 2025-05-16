@@ -56,6 +56,7 @@ require_once APP_ROOT . '/app/Models/Invite.php';
 require_once APP_ROOT . '/app/Models/SmtpSetting.php';
 require_once APP_ROOT . '/app/Models/UserProfile.php';
 require_once APP_ROOT . '/app/Models/GymSetting.php';
+require_once APP_ROOT . '/app/Models/PasswordReset.php';
 
 // Load middleware
 require_once APP_ROOT . '/app/Middleware/MiddlewareInterface.php';

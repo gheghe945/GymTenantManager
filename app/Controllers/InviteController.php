@@ -250,15 +250,92 @@ class InviteController extends BaseController {
         // Percorso del QR code
         $qrCodePath = '/uploads/qrcodes/' . $token . '.png';
         
+        // Genera il QR code se non esiste
+        if (!file_exists($_SERVER['DOCUMENT_ROOT'] . $qrCodePath)) {
+            $this->generateQrCode($token);
+        }
+        
         // Imposta i dati per la vista
         $data = [
             'invite' => $invite,
             'inviteUrl' => $inviteUrl,
-            'qrCodePath' => $qrCodePath
+            'qrCodePath' => $qrCodePath,
+            'smtpConfigured' => $this->smtpModel->isConfigured($_SESSION['tenant_id'])
         ];
         
         // Renderizza la vista
         $this->render('invites/details', $data);
+    }
+    
+    /**
+     * SendEmail - Invia l'email di invito
+     *
+     * @param string $token Token dell'invito
+     * @return void
+     */
+    public function sendEmail($token = '') {
+        // Verifica che sia una richiesta POST o AJAX
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST' && !isset($_SERVER['HTTP_X_REQUESTED_WITH'])) {
+            redirect('invites');
+        }
+        
+        // Verifica che l'utente sia autenticato e sia GYM_ADMIN
+        if (!isLoggedIn() || !hasRole('GYM_ADMIN')) {
+            $this->jsonResponse(false, 'Non sei autorizzato a effettuare questa operazione');
+            return;
+        }
+        
+        // Ottieni l'invito tramite token
+        $invite = $this->inviteModel->getByToken($token);
+        
+        // Verifica se l'invito esiste
+        if (!$invite) {
+            $this->jsonResponse(false, 'Invito non trovato');
+            return;
+        }
+        
+        // Verifica che l'invito appartenga al tenant corrente
+        if ($invite['tenant_id'] != $_SESSION['tenant_id']) {
+            $this->jsonResponse(false, 'Non hai i permessi per inviare questo invito');
+            return;
+        }
+        
+        // Verifica se SMTP è configurato
+        $smtpConfigured = $this->smtpModel->isConfigured($_SESSION['tenant_id']);
+        
+        if (!$smtpConfigured) {
+            $this->jsonResponse(false, 'Le impostazioni SMTP non sono configurate');
+            return;
+        }
+        
+        // Invia l'email
+        $emailSent = $this->sendInviteEmail($invite, $_SESSION['tenant_id']);
+        
+        if (!$emailSent) {
+            $this->jsonResponse(false, 'Errore nell\'invio dell\'email');
+            return;
+        }
+        
+        // Risposta JSON di successo
+        $this->jsonResponse(true, 'Email inviata con successo');
+    }
+    
+    /**
+     * Invia una risposta JSON
+     *
+     * @param bool $success Indica se l'operazione è riuscita
+     * @param string $message Messaggio da mostrare
+     * @param array $data Dati aggiuntivi (opzionale)
+     * @return void
+     */
+    private function jsonResponse($success, $message, $data = []) {
+        header('Content-Type: application/json');
+        echo json_encode([
+            'success' => $success,
+            'message' => $message,
+            'data' => $data
+        ]);
+        exit;
     }
     
     /**
@@ -605,21 +682,18 @@ class InviteController extends BaseController {
             // Percorso del file QR code
             $qrCodePath = $qrCodeDir . '/' . $token . '.png';
             
-            // Crea il QR code e salvalo direttamente come immagine
-            $qrCode = new QrCode($registerUrl);
-            $qrCode->setSize(300);
-            $qrCode->setMargin(10);
+            // Utilizziamo un metodo alternativo per creare un semplice QR code usando Google Charts API
+            $googleChartUrl = 'https://chart.googleapis.com/chart?cht=qr&chs=300x300&chl=' . urlencode($registerUrl);
+            $qrImageContent = file_get_contents($googleChartUrl);
             
-            $writer = new PngWriter();
-            $result = $writer->write($qrCode);
-            
-            // Ottieni l'immagine come stringa binaria
-            $imageString = $result->getByteString();
-            
-            // Scrivi l'immagine su file
-            file_put_contents($qrCodePath, $imageString);
-            
-            return true;
+            if ($qrImageContent) {
+                // Scrivi l'immagine su file
+                file_put_contents($qrCodePath, $qrImageContent);
+                return true;
+            } else {
+                error_log("Impossibile generare QR code da Google Charts API");
+                return false;
+            }
         } catch (Exception $e) {
             error_log("Errore nella generazione del QR code: " . $e->getMessage());
             return false;
