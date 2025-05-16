@@ -1,5 +1,8 @@
 
 <?php
+// Previeni qualsiasi output prima degli header
+ob_start();
+
 define('APP_ROOT', dirname(__DIR__));
 require_once APP_ROOT . '/config/database.php';
 
@@ -13,15 +16,12 @@ $command = sprintf(
     $output_file
 );
 
-echo "Esportazione del database in corso...\n";
-exec($command, $output, $return_var);
-
-if ($return_var === 0) {
-    echo "Database esportato con successo nel file: " . $output_file . "\n";
-    echo "Puoi scaricare il file dal browser visitando: /export_db.php";
-    
-    // Permetti il download del file
+if (exec($command, $output, $return_var) !== false) {
     if (file_exists($output_file)) {
+        // Pulisci qualsiasi output in buffer
+        ob_clean();
+        
+        // Imposta gli header per il download
         header('Content-Description: File Transfer');
         header('Content-Type: application/octet-stream');
         header('Content-Disposition: attachment; filename="'.basename($output_file).'"');
@@ -29,8 +29,12 @@ if ($return_var === 0) {
         header('Cache-Control: must-revalidate');
         header('Pragma: public');
         header('Content-Length: ' . filesize($output_file));
+        
+        // Invia il file
         readfile($output_file);
-        unlink($output_file); // Elimina il file dopo il download
+        
+        // Elimina il file temporaneo
+        unlink($output_file);
         exit;
     }
 } else {
